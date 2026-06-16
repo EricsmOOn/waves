@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use std::time::Duration;
-use waves::app::{build_session, inspect_config, replay_run, run_headless, validate_scenario};
+use waves::app::{build_session, inspect_config, replay_run, run_headless, run_play, validate_scenario};
 use waves::tui::{run_tui, run_tui_remote};
 
 #[derive(Debug, Parser)]
@@ -56,6 +56,18 @@ enum Commands {
         connect: Option<PathBuf>,
     },
     Serve {
+        #[arg(long, default_value = "sea_survival")]
+        scenario: String,
+        #[arg(long, default_value = "zh-CN")]
+        locale: String,
+        #[arg(long, default_value_t = 42)]
+        seed: u64,
+        #[arg(long, default_value = "data/waves.sqlite")]
+        db: PathBuf,
+        #[arg(long, default_value = "data/waves.sock")]
+        socket: PathBuf,
+    },
+    Play {
         #[arg(long, default_value = "sea_survival")]
         scenario: String,
         #[arg(long, default_value = "zh-CN")]
@@ -166,6 +178,15 @@ fn main() -> Result<()> {
                 socket.display()
             );
             waves::daemon::run_server(&scenario, &locale, seed, Some(db), socket)?;
+        }
+        Commands::Play {
+            scenario,
+            locale,
+            seed,
+            db,
+            socket,
+        } => {
+            run_play(&scenario, &locale, seed, Some(db), socket)?;
         }
         Commands::Replay { run_id, db } => {
             let summary = replay_run(db, &run_id)?;

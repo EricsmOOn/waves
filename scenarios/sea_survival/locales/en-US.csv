@@ -115,3 +115,4 @@ resolution.study_chart.failure,Chart reading stayed unclear,resolution
 resolution.change_course.success,Course worked and {target} -{amount} {unit},resolution
 resolution.change_course.failure,Course drifted and {target} +{amount} {unit},resolution
 resolution.default,Action produced no clear result,resolution
+play.share_hint,Copy to agent: cargo run -- mcp --connect {socket},control

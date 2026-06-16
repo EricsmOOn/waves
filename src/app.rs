@@ -4,8 +4,10 @@ use crate::config::{
 };
 use crate::core::{ExternalDecisionInput, RuntimeSession, SessionOptions, WorldState};
 use crate::persistence::{ReplaySummary, SqliteStore, replay_summary};
-use anyhow::{Result, bail};
+use crate::tui::run_tui_remote_with_hint;
+use anyhow::{Context, Result, bail};
 use std::path::PathBuf;
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct HeadlessReport {
@@ -142,6 +144,42 @@ pub fn build_external_session(
     db_path: Option<PathBuf>,
 ) -> Result<RuntimeSession> {
     build_session(scenario_id, locale, seed, db_path)
+}
+
+pub fn run_play(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: PathBuf,
+) -> Result<()> {
+    let hint = socket_path.display().to_string();
+    let abs_socket = std::path::absolute(&socket_path)
+        .with_context(|| format!("resolving socket path {}", socket_path.display()))?;
+
+    // Spawn daemon in background thread
+    let server_socket = abs_socket.clone();
+    let s = scenario.to_string();
+    let l = locale.to_string();
+    std::thread::spawn(move || {
+        if let Err(e) = crate::daemon::run_server(&s, &l, seed, db_path, server_socket) {
+            eprintln!("daemon error: {e:#}");
+        }
+    });
+
+    // Wait for socket to be connectable
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        if std::os::unix::net::UnixStream::connect(&abs_socket).is_ok() {
+            break;
+        }
+        if std::time::Instant::now() > deadline {
+            bail!("daemon did not start within 10 seconds (socket: {})", abs_socket.display());
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+
+    run_tui_remote_with_hint(abs_socket, Duration::from_millis(800), hint)
 }
 
 pub fn run_headless(

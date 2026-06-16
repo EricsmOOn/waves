@@ -20,6 +20,7 @@ pub struct AppView<'a> {
     pub pending_decision: Option<&'a PendingDecision>,
     pub current_frame: u64,
     pub paused: bool,
+    pub connection_hint: Option<&'a str>,
 }
 
 pub fn render_app(frame: &mut Frame<'_>, view: &AppView<'_>) {
@@ -365,7 +366,7 @@ fn render_decisions(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
 }
 
 fn render_footer(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
-    let text = format!(
+    let controls = format!(
         "{} · {} · {} {} · {} {}",
         view.catalog.text("control.quit"),
         view.catalog.text("control.pause"),
@@ -374,16 +375,35 @@ fn render_footer(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
         view.catalog.text("label.config"),
         view.config_hash
     );
-    frame.render_widget(
-        Paragraph::new(text)
-            .style(Theme::style(StyleRole::Muted))
-            .block(
-                Block::default()
-                    .title(view.catalog.text("panel.controls"))
-                    .borders(Borders::ALL),
-            ),
-        area,
-    );
+
+    if let Some(socket_path) = view.connection_hint {
+        let hint = view.catalog.format("play.share_hint", &[("socket", socket_path.to_string())]);
+        let lines = vec![
+            Line::from(hint),
+            Line::from(controls),
+        ];
+        frame.render_widget(
+            Paragraph::new(lines)
+                .style(Theme::style(StyleRole::Muted))
+                .block(
+                    Block::default()
+                        .title(view.catalog.text("panel.controls"))
+                        .borders(Borders::ALL),
+                ),
+            area,
+        );
+    } else {
+        frame.render_widget(
+            Paragraph::new(controls)
+                .style(Theme::style(StyleRole::Muted))
+                .block(
+                    Block::default()
+                        .title(view.catalog.text("panel.controls"))
+                        .borders(Borders::ALL),
+                ),
+            area,
+        );
+    }
 }
 
 fn resource_line(view: &AppView<'_>, key: &str, value: f64, unit: &str) -> Line<'static> {

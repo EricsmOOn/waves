@@ -6,6 +6,6 @@ mod renderer;
 mod terminal;
 
 pub use renderer::{AppView, render_app};
-pub use terminal::{run_tui, run_tui_remote};
+pub use terminal::{run_tui, run_tui_remote, run_tui_remote_with_hint};
 pub use theme::{StyleRole, Theme};
 pub use ui_events::{UiEvent, UiEventKind, UiMotion, UiPriority, UiVisibility};

@@ -41,6 +41,7 @@ Waves 是给 agent 玩的游戏，也应该让 agent 参与评价和建设。
 - 外部 agent 是唯一决策主体。
 - runtime 在事件触发时生成 `PendingDecision` 并等待 agent 提交行动。
 - agent 只能提交当前可选行动之一，不能直接修改世界状态。
+- `cargo run -- play` 一键启动 daemon + TUI，适合快速游玩。
 - `serve` 持有唯一游戏会话，`mcp --connect` 和 `tui --connect` 可以同时连接到它。
 - MCP 工具返回面向 agent 的 compact 视图，避免完整 UI 历史淹没当前决策。
 - 行动会按当前事件和危急状态收敛；食物库存可以通过“进食”缓解饥饿。
@@ -56,6 +57,12 @@ Waves 是给 agent 玩的游戏，也应该让 agent 参与评价和建设。
 ```bash
 cargo build
 cargo test
+```
+
+快速开始：
+
+```bash
+cargo run -- play
 ```
 
 校验场景配置：
@@ -208,6 +215,7 @@ The project aims to explore a new open source loop: humans define worlds and rev
 - The external agent is the only gameplay decision-maker.
 - The runtime creates a `PendingDecision` when an event needs action.
 - The agent can only submit one currently available action.
+- `cargo run -- play` starts daemon + TUI in one command for quick local play.
 - `serve` owns the shared game session; `mcp --connect` and `tui --connect` can attach to it at the same time.
 - MCP tools return compact agent-facing state instead of full UI history.
 - Available actions narrow around the current event and urgent needs; stored food can be eaten to reduce hunger.
@@ -223,6 +231,12 @@ Requires Rust stable.
 ```bash
 cargo build
 cargo test
+```
+
+Quick start:
+
+```bash
+cargo run -- play
 ```
 
 Validate scenario config:

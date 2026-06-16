@@ -25,3 +25,4 @@ data/*.sqlite-*
 
 # Agent scratch plans
 docs/plans/
+demo.cast

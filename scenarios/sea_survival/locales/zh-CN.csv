@@ -115,3 +115,4 @@ resolution.study_chart.failure,海图判断不明确,resolution
 resolution.change_course.success,航向有效，{target} -{amount} {unit},resolution
 resolution.change_course.failure,偏航，{target} +{amount} {unit},resolution
 resolution.default,行动没有产生明显结果,resolution
+play.share_hint,复制发给Agent: 使用 cargo run -- mcp --connect {socket} 进行游玩,control
