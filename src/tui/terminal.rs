@@ -32,12 +32,12 @@ pub fn run_tui_remote_with_hint(
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let result = run_tui_remote_loop_with_hint(
+    let result = run_tui_remote_loop(
         &mut terminal,
         &client,
         &mut catalog_cache,
         tick_rate,
-        &connection_hint,
+        Some(&connection_hint),
     );
     let cleanup = restore_terminal(&mut terminal);
     result.and(cleanup)
@@ -116,57 +116,9 @@ pub fn run_tui_remote(socket_path: PathBuf, tick_rate: Duration) -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let result = run_tui_remote_loop(&mut terminal, &client, &mut catalog_cache, tick_rate);
+    let result = run_tui_remote_loop(&mut terminal, &client, &mut catalog_cache, tick_rate, None);
     let cleanup = restore_terminal(&mut terminal);
     result.and(cleanup)
-}
-
-fn run_tui_remote_loop_with_hint(
-    terminal: &mut AppTerminal,
-    client: &DaemonClient,
-    catalog_cache: &mut RemoteCatalogCache,
-    tick_rate: Duration,
-    connection_hint: &str,
-) -> Result<()> {
-    loop {
-        let snapshot: SessionSnapshot =
-            client.request("get_state", json!({ "advance_frame": true }))?;
-        let catalog = catalog_cache.catalog_for(&snapshot)?;
-
-        terminal.draw(|frame| {
-            let view = AppView {
-                run_id: &snapshot.run_id,
-                scenario_id: &snapshot.scenario_id,
-                config_hash: &snapshot.config_hash,
-                state: &snapshot.state,
-                catalog,
-                logs: &snapshot.logs,
-                decisions: &snapshot.decisions,
-                ui_events: &snapshot.ui_events,
-                pending_decision: snapshot.pending_decision.as_ref(),
-                current_frame: snapshot.presentation_frame,
-                paused: snapshot.paused,
-                connection_hint: Some(connection_hint),
-            };
-            render_app(frame, &view);
-        })?;
-
-        if event::poll(tick_rate.min(Duration::from_millis(250)))?
-            && let Event::Key(key) = event::read()?
-        {
-            match key.code {
-                KeyCode::Char('q') | KeyCode::Esc => break Ok(()),
-                KeyCode::Char('p') | KeyCode::Char(' ') => {
-                    if snapshot.paused {
-                        client.request_value("resume", json!({}))?;
-                    } else {
-                        client.request_value("pause", json!({}))?;
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
 }
 
 fn run_tui_remote_loop(
@@ -174,6 +126,7 @@ fn run_tui_remote_loop(
     client: &DaemonClient,
     catalog_cache: &mut RemoteCatalogCache,
     tick_rate: Duration,
+    connection_hint: Option<&str>,
 ) -> Result<()> {
     loop {
         let snapshot: SessionSnapshot =
@@ -193,7 +146,7 @@ fn run_tui_remote_loop(
                 pending_decision: snapshot.pending_decision.as_ref(),
                 current_frame: snapshot.presentation_frame,
                 paused: snapshot.paused,
-                connection_hint: None,
+                connection_hint,
             };
             render_app(frame, &view);
         })?;

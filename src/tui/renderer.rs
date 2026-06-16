@@ -29,7 +29,7 @@ pub fn render_app(frame: &mut Frame<'_>, view: &AppView<'_>) {
         .constraints([
             Constraint::Length(3),
             Constraint::Min(12),
-            Constraint::Length(3),
+            Constraint::Length(4),
         ])
         .split(frame.area());
 
