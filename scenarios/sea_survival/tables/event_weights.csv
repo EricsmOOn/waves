@@ -1,0 +1,9 @@
+event_id,weather_modifier,sea_modifier,notes
+rain,1.2,1.0,cloudy weather raises rain chance
+heat,1.0,1.0,clear weather raises heat chance
+storm,1.0,1.4,rough sea raises storm chance
+fish_shoal,1.0,0.9,calm sea helps fishing
+floating_crate,1.0,1.1,rough sea pushes debris
+hull_damage,1.0,1.3,rough sea damages raft
+island_silhouette,1.0,1.0,navigation progress
+abandoned_ship,1.0,1.0,rare high risk event

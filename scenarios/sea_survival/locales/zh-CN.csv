@@ -1,0 +1,117 @@
+key,text,notes
+app.title,Waves 观测框架,application title
+scenario.sea_survival.title,海洋求生,scenario title
+panel.overview,概览,panel title
+panel.status,状态,panel title
+panel.resources,资源,panel title
+panel.environment,环境,panel title
+panel.ai,智能体,panel title
+panel.decisions,决策,panel title
+panel.logs,日志,panel title
+panel.activity,活动,panel title
+panel.controls,控制,panel title
+status.running,运行中,status label
+status.paused,已暂停,status label
+label.tick,回合,ui label
+label.day,天数,ui label
+label.weather,天气,ui label
+label.sea,海况,ui label
+label.risk,风险,ui label
+label.goal,目标,ui label
+label.concern,关注,ui label
+label.risk_bias,冒险倾向,ui label
+label.explore,探索倾向,ui label
+label.agent,智能体,ui label
+label.waiting,等待中,ui label
+label.actions,可选行动,ui label
+label.run,运行,ui label
+label.config,配置,ui label
+control.quit,q 退出,control label
+control.pause,p/space 暂停,control label
+control.paused,运行已暂停,control message
+control.resumed,运行已继续,control message
+source.agent,智能体,source label
+source.fallback,备用策略,source label
+stat.hp,生命,status label
+stat.hunger,饥饿,status label
+stat.thirst,口渴,status label
+stat.energy,体力,status label
+stat.morale,士气,status label
+stat.raft,木筏,status label
+resource.food,食物,resource label
+resource.water,淡水,resource label
+resource.wood,木材,resource label
+resource.fiber,纤维,resource label
+resource.tool,工具,resource label
+action.fish,捕鱼,action name
+action.eat_food,进食,action name
+action.collect_rain,收集雨水,action name
+action.salvage,打捞漂浮物,action name
+action.repair_raft,修理木筏,action name
+action.rest,休息,action name
+action.observe_weather,观察天气,action name
+action.study_chart,研究海图,action name
+action.change_course,改变航向,action name
+event.rain.title,下雨,event title
+event.heat.title,暴晒,event title
+event.storm.title,风暴逼近,event title
+event.fish_shoal.title,发现鱼群,event title
+event.floating_crate.title,发现漂浮木箱,event title
+event.hull_damage.title,船体受损,event title
+event.island_silhouette.title,远处岛影,event title
+event.abandoned_ship.title,废弃船只,event title
+prompt.decision,根据当前状态选择一个行动，并输出结构化决策。,prompt template
+log.tick,{actor} 继续漂流，海面状态保持变化。,log template
+log.decision,{actor} 选择 {action}：{reason},log template
+log.result,{action} 结算完成：{summary},log template
+log.fallback,智能体输出异常，系统使用备用策略选择 {action}。,log template
+weather.clear,晴朗,environment
+weather.cloudy,多云,environment
+weather.rain,雨,environment
+weather.heat,暴晒,environment
+weather.storm,风暴,environment
+sea.calm,平静,environment
+sea.moderate,中等,environment
+sea.rough,汹涌,environment
+risk.low,低,environment
+risk.medium,中,environment
+risk.high,高,environment
+risk.critical,危急,environment
+ai.goal.survive,活下去,ai goal
+ai.goal.find_land,寻找陆地,ai goal
+ai.goal.preserve_raft,保存木筏,ai goal
+ai.concern.water,淡水不足,ai concern
+ai.concern.raft,木筏脆弱,ai concern
+ai.concern.energy,体力偏低,ai concern
+ai.concern.land,寻找陆地,ai concern
+nav.target,距离陆地,navigation label
+unit.distance,海里,unit
+unit.days_short,天,unit
+ui.kind.value_delta,变化,ui event kind
+ui.kind.risk,风险,ui event kind
+ui.kind.decision,决策,ui event kind
+ui.kind.fallback,备用,ui event kind
+ui.kind.log,日志,ui event kind
+ui.kind.world_event,事件,ui event kind
+ui.kind.control,控制,ui event kind
+ui.message.value_delta,{target} {delta},ui event message
+ui.message.risk,风险变为{risk},ui event message
+ui.message.decision,选择{action},ui event message
+ui.message.fallback,备用策略选择{action},ui event message
+scripted.reason.first_available,本地脚本选择第一个可用行动。,scripted runner
+resolution.fish.success,{resource} +{amount} 天,resolution
+resolution.fish.failure,没有获得{resource}，{stat}下降,resolution
+resolution.eat_food,{stat} -{amount},resolution
+resolution.collect_water.success,{resource} +{amount} 天,resolution
+resolution.collect_water.failure,只收集到少量{resource},resolution
+resolution.salvage.success,获得{wood} +{wood_amount}、{fiber} +{fiber_amount},resolution
+resolution.salvage.failure,{action}失败，{durability} -{amount},resolution
+resolution.repair.success,{durability} +{amount},resolution
+resolution.repair.failure,修理效果有限，{durability} +{amount},resolution
+resolution.rest,{stat} +{amount},resolution
+resolution.observe,完成天气判断，下一步更谨慎,resolution
+resolution.study_chart.success,{target} -{amount} {unit},resolution
+resolution.study_chart.failure,海图判断不明确,resolution
+resolution.change_course.success,航向有效，{target} -{amount} {unit},resolution
+resolution.change_course.failure,偏航，{target} +{amount} {unit},resolution
+resolution.default,行动没有产生明显结果,resolution

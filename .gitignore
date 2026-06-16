@@ -1,0 +1,27 @@
+# Rust build output
+/target
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust
+**/*.rs.bk
+
+# Data
+data/*.sqlite
+data/*.sqlite-*
+
+# Environment
+.env
+.env.local
+
+# Agent scratch plans
+docs/plans/

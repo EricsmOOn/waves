@@ -1,0 +1,10 @@
+id,name_key,risk,cost_energy,cost_wood,cost_fiber,reward_type,resolver_id,enabled
+fish,action.fish,low,10,0,0,food,fish_basic,true
+eat_food,action.eat_food,low,2,0,0,food,eat_food_basic,true
+collect_rain,action.collect_rain,low,6,0,0,water,collect_rain_basic,true
+salvage,action.salvage,medium,16,0,0,mixed,salvage_basic,true
+repair_raft,action.repair_raft,low,10,3,2,raft,repair_basic,true
+rest,action.rest,low,0,0,0,energy,rest_basic,true
+observe_weather,action.observe_weather,low,4,0,0,information,observe_weather_basic,true
+study_chart,action.study_chart,medium,7,0,0,navigation,study_chart_basic,true
+change_course,action.change_course,medium,12,0,0,navigation,change_course_basic,true

@@ -1,0 +1,9 @@
+id,title_key,level,sort,visible
+overview,panel.overview,4,10,true
+status,panel.status,2,20,true
+resources,panel.resources,2,30,true
+environment,panel.environment,2,40,true
+ai,panel.ai,1,50,true
+decisions,panel.decisions,3,60,true
+logs,panel.logs,3,70,true
+controls,panel.controls,4,80,true

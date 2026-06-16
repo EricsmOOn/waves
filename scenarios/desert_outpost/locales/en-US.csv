@@ -1,0 +1,117 @@
+key,text,notes
+app.title,Waves Observer Framework,application title
+scenario.desert_outpost.title,Desert Outpost,scenario title
+panel.overview,Overview,panel title
+panel.status,Status,panel title
+panel.resources,Supplies,panel title
+panel.environment,Environment,panel title
+panel.ai,Agent,panel title
+panel.decisions,Decisions,panel title
+panel.logs,Logs,panel title
+panel.activity,Activity,panel title
+panel.controls,Controls,panel title
+status.running,Running,status label
+status.paused,Paused,status label
+label.tick,tick,ui label
+label.day,day,ui label
+label.weather,Weather,ui label
+label.sea,Terrain,ui label
+label.risk,Risk,ui label
+label.goal,Goal,ui label
+label.concern,Concern,ui label
+label.risk_bias,Risk Bias,ui label
+label.explore,Explore,ui label
+label.agent,Agent,ui label
+label.waiting,waiting,ui label
+label.actions,Actions,ui label
+label.run,run,ui label
+label.config,config,ui label
+control.quit,q quit,control label
+control.pause,p/space pause,control label
+control.paused,Run paused,control message
+control.resumed,Run resumed,control message
+source.agent,Agent,source label
+source.fallback,Fallback,source label
+stat.hp,HP,status label
+stat.hunger,Hunger,status label
+stat.thirst,Thirst,status label
+stat.energy,Energy,status label
+stat.morale,Morale,status label
+stat.raft,Shelter,status label
+resource.food,Rations,resource label
+resource.water,Water,resource label
+resource.wood,Scrap,resource label
+resource.fiber,Cloth,resource label
+resource.tool,Tools,resource label
+action.fish,Forage,action name
+action.eat_food,Eat Ration,action name
+action.collect_rain,Condense Water,action name
+action.salvage,Scavenge Ruins,action name
+action.repair_raft,Reinforce Shelter,action name
+action.rest,Rest,action name
+action.observe_weather,Watch Heat,action name
+action.study_chart,Study Map,action name
+action.change_course,Move Camp,action name
+event.rain.title,Night Dew,event title
+event.heat.title,Heatwave,event title
+event.storm.title,Sandstorm Closing In,event title
+event.fish_shoal.title,Animal Tracks,event title
+event.floating_crate.title,Supply Cache,event title
+event.hull_damage.title,Shelter Damage,event title
+event.island_silhouette.title,Distant Ridge,event title
+event.abandoned_ship.title,Abandoned Rover,event title
+prompt.decision,Choose one action from the current structured state.,prompt template
+log.tick,{actor} holds the outpost as the desert state changes.,log template
+log.decision,{actor} chose {action}: {reason},log template
+log.result,{action} resolved: {summary},log template
+log.fallback,Agent output failed; fallback selected {action}.,log template
+weather.clear,Clear,environment
+weather.cloudy,Thin Cloud,environment
+weather.rain,Dew,environment
+weather.heat,Heat,environment
+weather.storm,Sandstorm,environment
+sea.calm,Stable,environment
+sea.moderate,Uneven,environment
+sea.rough,Harsh,environment
+risk.low,Low,environment
+risk.medium,Medium,environment
+risk.high,High,environment
+risk.critical,Critical,environment
+ai.goal.survive,Hold the outpost,ai goal
+ai.goal.find_land,Reach the oasis,ai goal
+ai.goal.preserve_raft,Protect shelter,ai goal
+ai.concern.water,Low water,ai concern
+ai.concern.raft,Fragile shelter,ai concern
+ai.concern.energy,Low energy,ai concern
+ai.concern.land,Find oasis,ai concern
+nav.target,Distance to oasis,navigation label
+unit.distance,km,unit
+unit.days_short,d,unit
+ui.kind.value_delta,delta,ui event kind
+ui.kind.risk,risk,ui event kind
+ui.kind.decision,decision,ui event kind
+ui.kind.fallback,fallback,ui event kind
+ui.kind.log,log,ui event kind
+ui.kind.world_event,event,ui event kind
+ui.kind.control,control,ui event kind
+ui.message.value_delta,{target} {delta},ui event message
+ui.message.risk,Risk is {risk},ui event message
+ui.message.decision,Chose {action},ui event message
+ui.message.fallback,Fallback chose {action},ui event message
+scripted.reason.first_available,Scripted local runner selected the first available action.,scripted runner
+resolution.fish.success,{resource} +{amount} days,resolution
+resolution.fish.failure,No {resource} gained and {stat} fell,resolution
+resolution.eat_food,{stat} -{amount},resolution
+resolution.collect_water.success,{resource} +{amount} days,resolution
+resolution.collect_water.failure,Only a little {resource} was collected,resolution
+resolution.salvage.success,Gained {wood} +{wood_amount} and {fiber} +{fiber_amount},resolution
+resolution.salvage.failure,{action} failed and {durability} -{amount},resolution
+resolution.repair.success,{durability} +{amount},resolution
+resolution.repair.failure,Reinforcement was limited and {durability} +{amount},resolution
+resolution.rest,{stat} +{amount},resolution
+resolution.observe,Heat read completed and the next move is more cautious,resolution
+resolution.study_chart.success,{target} -{amount} {unit},resolution
+resolution.study_chart.failure,Map reading stayed unclear,resolution
+resolution.change_course.success,Route worked and {target} -{amount} {unit},resolution
+resolution.change_course.failure,Route drifted and {target} +{amount} {unit},resolution
+resolution.default,Action produced no clear result,resolution

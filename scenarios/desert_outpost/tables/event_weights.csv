@@ -1,0 +1,9 @@
+event_id,weather_modifier,sea_modifier,notes
+rain,0.8,1.0,rare night dew event
+heat,1.4,1.0,clear weather raises heat chance
+storm,1.0,1.3,rough terrain raises storm chance
+fish_shoal,1.0,0.9,tracks are easier in calm periods
+floating_crate,1.0,1.1,wind exposes old caches
+hull_damage,1.0,1.3,rough wind damages shelter
+island_silhouette,1.0,1.0,navigation progress
+abandoned_ship,1.0,1.0,rare high risk ruin

@@ -1,0 +1,67 @@
+key,value,notes
+tick_minutes,30,one runtime tick represents thirty scenario minutes
+event_interval_ticks,4,trigger one decision event every two scenario hours
+hunger_per_tick,1.1,hunger pressure increase
+thirst_per_tick,1.65,thirst pressure increase
+energy_per_tick,0.9,baseline fatigue
+water_per_tick,0.04,water days consumed per tick
+food_per_tick,0.022,food days consumed per tick
+snapshot_interval_ticks,6,save snapshot every six ticks
+victory_distance,0,arrival threshold
+starting_distance,90,distance to safe settlement
+success_default,0.5,default action success chance
+success_fish,0.6,base foraging success chance
+success_eat_food,1,ration consumption does not use random failure
+success_collect_rain,0.64,base dew collection success chance
+success_salvage,0.58,base scavenging success chance
+success_repair_raft,0.88,base shelter repair success chance
+success_rest,0.98,base rest success chance
+success_observe_weather,0.86,base heat observation success chance
+success_study_chart,0.74,base map study success chance
+success_change_course,0.62,base camp move success chance
+success_modifier_rough_sea,-0.12,rough terrain success modifier
+success_modifier_storm,-0.2,sandstorm success modifier
+success_modifier_low_energy,-0.12,low energy success modifier
+success_modifier_weak_raft_action,-0.12,weak shelter modifier for risky movement
+success_bonus_fish_shoal,0.18,tracks bonus for foraging
+success_bonus_rain_collect,0.12,dew bonus for water collection
+success_bonus_island_navigation,0.24,ridge clue bonus for navigation actions
+low_energy_threshold,35,energy threshold for low energy modifier
+weak_raft_threshold,55,shelter threshold for risky movement modifier
+urgent_food_resource_threshold,0.9,show foraging outside track events when food is low
+urgent_hunger_threshold,70,show foraging outside track events when hunger is high
+urgent_water_resource_threshold,0.55,show water collection outside dew when water is low
+urgent_thirst_threshold,80,show water collection outside dew when thirst is high
+urgent_wood_threshold,3,show scavenging outside cache events when scrap is low
+urgent_fiber_threshold,2,show scavenging outside cache events when cloth is low
+repair_action_raft_threshold,70,show reinforcement when shelter durability is below this
+navigation_energy_threshold,40,show opportunistic movement when energy is healthy
+eat_food_hunger_threshold,45,show eating when hunger exceeds this
+fish_food_gain,0.75,food days gained from successful foraging
+fish_morale_gain,2,morale gained from successful foraging
+fish_morale_loss,2,morale lost from failed foraging
+eat_food_cost,0.35,ration days consumed by eating
+eat_food_hunger_relief,15,hunger reduced by eating a ration
+eat_food_thirst_cost,2.5,thirst added by eating dry rations
+collect_rain_gain_rain,0.65,water days gained during dew event
+collect_rain_gain_other,0.12,water days gained without dew
+collect_rain_thirst_relief_per_water,9,thirst relief per water day collected
+collect_rain_fail_gain,0.03,water days gained from failed collection
+salvage_wood_gain,2,scrap gained from successful scavenging
+salvage_fiber_gain,1,cloth gained from successful scavenging
+salvage_tool_gain_abandoned_ship,1,tools gained from rover salvage
+salvage_morale_gain,3,morale gained from successful scavenging
+salvage_raft_loss_fail,7,shelter durability lost on failed scavenging
+salvage_energy_loss_fail,5,extra energy lost on failed scavenging
+repair_raft_gain_success,13,shelter durability gained on successful repair
+repair_raft_gain_fail,4,shelter durability gained on weak repair
+rest_energy_gain,17,energy gained from resting
+rest_morale_gain,1,morale gained from resting
+rest_hunger_cost,1,hunger added by resting
+rest_thirst_cost,1.2,thirst added by resting
+observe_energy_cost_extra,1,extra energy spent when observing heat
+study_distance_gain_success,11,distance reduced by successful map study
+study_morale_loss_fail,1,morale lost from failed map study
+change_course_distance_gain_success,13,distance reduced by successful camp move
+change_course_distance_loss_fail,4,distance added by failed camp move
+change_course_energy_loss_fail,4,extra energy lost by failed camp move

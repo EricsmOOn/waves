@@ -1,0 +1,9 @@
+id,title_key,severity,base_weight,cooldown_ticks,resolver_id
+rain,event.rain.title,notice,10,4,rain_basic
+heat,event.heat.title,warning,10,3,heat_basic
+storm,event.storm.title,danger,4,8,storm_basic
+fish_shoal,event.fish_shoal.title,notice,9,4,fish_shoal_basic
+floating_crate,event.floating_crate.title,notice,8,5,floating_crate_basic
+hull_damage,event.hull_damage.title,warning,5,6,hull_damage_basic
+island_silhouette,event.island_silhouette.title,notice,6,10,island_silhouette_basic
+abandoned_ship,event.abandoned_ship.title,danger,2,12,abandoned_ship_basic

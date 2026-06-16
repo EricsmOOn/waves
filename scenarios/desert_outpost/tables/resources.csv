@@ -1,0 +1,6 @@
+id,label_key,default,unit,display_format,sort
+food,resource.food,2.1,days,days,10
+water,resource.water,0.7,days,days,20
+wood,resource.wood,6,count,int,30
+fiber,resource.fiber,7,count,int,40
+tool,resource.tool,1,count,int,50

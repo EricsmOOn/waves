@@ -1,0 +1,7 @@
+id,label_key,min,max,default,display_format,sort
+hp,stat.hp,0,100,88,percent,10
+hunger,stat.hunger,0,100,30,percent,20
+thirst,stat.thirst,0,100,48,percent,30
+energy,stat.energy,0,100,70,percent,40
+morale,stat.morale,0,100,50,percent,50
+raft,stat.raft,0,100,72,percent,60

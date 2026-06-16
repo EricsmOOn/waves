@@ -1,0 +1,2 @@
+id,template_key,variables
+decision,prompt.decision,"state,resources,environment,event,actions,memory,personality"

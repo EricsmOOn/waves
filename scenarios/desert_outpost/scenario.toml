@@ -1,0 +1,18 @@
+id = "desert_outpost"
+version = "0.1.0"
+default_locale = "zh-CN"
+entry = "desert_outpost"
+
+[tables]
+stats = "tables/stats.csv"
+resources = "tables/resources.csv"
+actions = "tables/actions.csv"
+events = "tables/events.csv"
+event_weights = "tables/event_weights.csv"
+balance = "tables/balance.csv"
+panels = "tables/panels.csv"
+prompts = "tables/prompts.csv"
+
+[locales]
+zh_CN = "locales/zh-CN.csv"
+en_US = "locales/en-US.csv"

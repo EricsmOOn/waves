@@ -1,0 +1,67 @@
+key,value,notes
+tick_minutes,30,one runtime tick represents thirty scenario minutes
+event_interval_ticks,4,trigger one decision event every two scenario hours
+hunger_per_tick,1.1,hunger pressure increase
+thirst_per_tick,1.35,thirst pressure increase
+energy_per_tick,0.8,baseline fatigue
+water_per_tick,0.032,water days consumed per tick
+food_per_tick,0.025,food days consumed per tick
+snapshot_interval_ticks,6,save snapshot every six ticks
+victory_distance,0,arrival threshold
+starting_distance,120,nautical miles to land
+success_default,0.5,default action success chance
+success_fish,0.66,base fishing success chance
+success_eat_food,1,food consumption does not use random failure
+success_collect_rain,0.78,base rain collection success chance
+success_salvage,0.55,base salvage success chance
+success_repair_raft,0.9,base raft repair success chance
+success_rest,0.98,base rest success chance
+success_observe_weather,0.88,base weather observation success chance
+success_study_chart,0.72,base chart study success chance
+success_change_course,0.64,base course change success chance
+success_modifier_rough_sea,-0.14,rough sea success modifier
+success_modifier_storm,-0.18,storm success modifier
+success_modifier_low_energy,-0.1,low energy success modifier
+success_modifier_weak_raft_action,-0.12,weak raft modifier for risky movement
+success_bonus_fish_shoal,0.22,fish shoal bonus for fishing
+success_bonus_rain_collect,0.16,rain bonus for collecting water
+success_bonus_island_navigation,0.24,island clue bonus for navigation actions
+low_energy_threshold,35,energy threshold for low energy modifier
+weak_raft_threshold,55,raft threshold for risky movement modifier
+urgent_food_resource_threshold,0.9,show fishing outside fish events when food is low
+urgent_hunger_threshold,70,show fishing outside fish events when hunger is high
+urgent_water_resource_threshold,0.55,show water collection outside rain when water is low
+urgent_thirst_threshold,80,show water collection outside rain when thirst is high
+urgent_wood_threshold,3,show salvage outside salvage events when wood is low
+urgent_fiber_threshold,2,show salvage outside salvage events when fiber is low
+repair_action_raft_threshold,70,show repair when raft durability is below this
+navigation_energy_threshold,40,show opportunistic navigation when energy is healthy
+eat_food_hunger_threshold,45,show eating when hunger exceeds this
+fish_food_gain,0.85,food days gained from successful fishing
+fish_morale_gain,2,morale gained from successful fishing
+fish_morale_loss,2,morale lost from failed fishing
+eat_food_cost,0.35,food days consumed by eating
+eat_food_hunger_relief,16,hunger reduced by eating a ration
+eat_food_thirst_cost,2,thirst added by eating salty stored food
+collect_rain_gain_rain,0.9,water days gained during rain
+collect_rain_gain_other,0.15,water days gained without rain
+collect_rain_thirst_relief_per_water,9,thirst relief per water day collected
+collect_rain_fail_gain,0.03,water days gained from failed collection
+salvage_wood_gain,2,wood gained from successful salvage
+salvage_fiber_gain,1,fiber gained from successful salvage
+salvage_tool_gain_abandoned_ship,1,tools gained from abandoned ship salvage
+salvage_morale_gain,3,morale gained from successful salvage
+salvage_raft_loss_fail,8,raft durability lost on failed salvage
+salvage_energy_loss_fail,4,extra energy lost on failed salvage
+repair_raft_gain_success,14,raft durability gained on successful repair
+repair_raft_gain_fail,4,raft durability gained on weak repair
+rest_energy_gain,18,energy gained from resting
+rest_morale_gain,1,morale gained from resting
+rest_hunger_cost,1,hunger added by resting
+rest_thirst_cost,1,thirst added by resting
+observe_energy_cost_extra,1,extra energy spent when observing weather
+study_distance_gain_success,10,distance reduced by successful chart study
+study_morale_loss_fail,1,morale lost from failed chart study
+change_course_distance_gain_success,14,distance reduced by successful course change
+change_course_distance_loss_fail,3,distance added by failed course change
+change_course_energy_loss_fail,3,extra energy lost by failed course change

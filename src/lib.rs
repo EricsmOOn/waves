@@ -1,0 +1,9 @@
+pub mod app;
+pub mod config;
+pub mod core;
+pub mod daemon;
+pub mod i18n;
+pub mod mcp;
+pub mod persistence;
+pub mod scenario;
+pub mod tui;
