@@ -115,4 +115,9 @@ resolution.study_chart.failure,海图判断不明确,resolution
 resolution.change_course.success,航向有效，{target} -{amount} {unit},resolution
 resolution.change_course.failure,偏航，{target} +{amount} {unit},resolution
 resolution.default,行动没有产生明显结果,resolution
+mcp.guidance.water_available,淡水压力高：当前可选{collect_rain}；即使不是下雨事件，也能获得应急淡水。下雨时补水效率最高。,mcp guidance
+mcp.guidance.water_watch,淡水压力高：优先寻找{collect_rain}机会；即使不是下雨事件，也能获得应急淡水。,mcp guidance
+mcp.guidance.navigation_available,距离只会通过导航行动推进：当前可选{study_chart}或{change_course}，成功后会降低 distance_to_land；生存状态稳定时应主动选择。,mcp guidance
+mcp.guidance.navigation_watch,距离需要通过导航行动推进：{study_chart}和{change_course}成功后会降低 distance_to_land；生存状态稳定时留意这些机会。,mcp guidance
+mcp.guidance.balance,在生存压力和推进距离之间取舍：先稳住生命、口渴、木筏和体力，再抓住导航机会。,mcp guidance
 play.share_hint,复制发给Agent: 使用 cargo run -- mcp --connect {socket} 进行游玩,control

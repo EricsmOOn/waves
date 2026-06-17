@@ -115,4 +115,9 @@ resolution.study_chart.failure,Chart reading stayed unclear,resolution
 resolution.change_course.success,Course worked and {target} -{amount} {unit},resolution
 resolution.change_course.failure,Course drifted and {target} +{amount} {unit},resolution
 resolution.default,Action produced no clear result,resolution
+mcp.guidance.water_available,"Water pressure is high: {collect_rain} is available now; it can recover emergency water even outside rain, while rain events are the strongest refill window.",mcp guidance
+mcp.guidance.water_watch,Water pressure is high: look for {collect_rain} opportunities; it can recover emergency water even outside rain.,mcp guidance
+mcp.guidance.navigation_available,"Distance advances through navigation actions: {study_chart} or {change_course} is available now, and success reduces distance_to_land; choose them when survival pressure is manageable.",mcp guidance
+mcp.guidance.navigation_watch,Distance advances through navigation actions: {study_chart} and {change_course} reduce distance_to_land on success; watch for those opportunities when survival pressure is manageable.,mcp guidance
+mcp.guidance.balance,"Balance survival pressure with progress: stabilize HP, thirst, raft, and energy, then take navigation opportunities.",mcp guidance
 play.share_hint,Copy to agent: cargo run -- mcp --connect {socket},control

@@ -2,9 +2,10 @@ key,value,notes
 tick_minutes,30,one runtime tick represents thirty scenario minutes
 event_interval_ticks,4,trigger one decision event every two scenario hours
 hunger_per_tick,1.1,hunger pressure increase
-thirst_per_tick,1.35,thirst pressure increase
+thirst_per_tick,0.95,thirst pressure increase
 energy_per_tick,0.8,baseline fatigue
-water_per_tick,0.032,water days consumed per tick
+water_per_tick,0.026,water days consumed per tick
+water_thirst_relief_per_tick,0.5,thirst pressure offset from available water each tick
 food_per_tick,0.025,food days consumed per tick
 snapshot_interval_ticks,6,save snapshot every six ticks
 victory_distance,0,arrival threshold
@@ -12,7 +13,7 @@ starting_distance,120,nautical miles to land
 success_default,0.5,default action success chance
 success_fish,0.66,base fishing success chance
 success_eat_food,1,food consumption does not use random failure
-success_collect_rain,0.78,base rain collection success chance
+success_collect_rain,0.84,base rain collection success chance
 success_salvage,0.55,base salvage success chance
 success_repair_raft,0.9,base raft repair success chance
 success_rest,0.98,base rest success chance
@@ -30,8 +31,8 @@ low_energy_threshold,35,energy threshold for low energy modifier
 weak_raft_threshold,55,raft threshold for risky movement modifier
 urgent_food_resource_threshold,0.9,show fishing outside fish events when food is low
 urgent_hunger_threshold,70,show fishing outside fish events when hunger is high
-urgent_water_resource_threshold,0.55,show water collection outside rain when water is low
-urgent_thirst_threshold,80,show water collection outside rain when thirst is high
+urgent_water_resource_threshold,0.75,show water collection outside rain when water is low
+urgent_thirst_threshold,68,show water collection outside rain when thirst is high
 urgent_wood_threshold,3,show salvage outside salvage events when wood is low
 urgent_fiber_threshold,2,show salvage outside salvage events when fiber is low
 repair_action_raft_threshold,70,show repair when raft durability is below this
@@ -43,10 +44,10 @@ fish_morale_loss,2,morale lost from failed fishing
 eat_food_cost,0.35,food days consumed by eating
 eat_food_hunger_relief,16,hunger reduced by eating a ration
 eat_food_thirst_cost,2,thirst added by eating salty stored food
-collect_rain_gain_rain,0.9,water days gained during rain
-collect_rain_gain_other,0.15,water days gained without rain
-collect_rain_thirst_relief_per_water,9,thirst relief per water day collected
-collect_rain_fail_gain,0.03,water days gained from failed collection
+collect_rain_gain_rain,1.15,water days gained during rain
+collect_rain_gain_other,0.38,water days gained without rain
+collect_rain_thirst_relief_per_water,11,thirst relief per water day collected
+collect_rain_fail_gain,0.08,water days gained from failed collection
 salvage_wood_gain,2,wood gained from successful salvage
 salvage_fiber_gain,1,fiber gained from successful salvage
 salvage_tool_gain_abandoned_ship,1,tools gained from abandoned ship salvage

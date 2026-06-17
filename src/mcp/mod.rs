@@ -1,4 +1,6 @@
+use crate::config::load_scenario_config;
 use crate::daemon::{DaemonClient, SessionHost};
+use crate::i18n::Catalog;
 use anyhow::{Result, anyhow};
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -143,10 +145,139 @@ fn compact_snapshot(snapshot: &Value) -> Value {
         "outcome": snapshot["outcome"],
         "state": compact_world_state(&snapshot["state"]),
         "pending_decision": compact_pending_decision(&snapshot["pending_decision"]),
+        "guidance": mcp_guidance(snapshot),
         "recent_logs": recent_items(&snapshot["logs"], 5),
         "recent_decisions": recent_items(&snapshot["decisions"], 5),
         "counts": snapshot["counts"],
     })
+}
+
+fn mcp_guidance(snapshot: &Value) -> Value {
+    if snapshot["scenario_id"].as_str() != Some("sea_survival") {
+        return json!([]);
+    }
+
+    let catalog = guidance_catalog(snapshot);
+    let state = &snapshot["state"];
+    let pending = &snapshot["pending_decision"];
+    let thirst = state["stats"]["thirst"].as_f64().unwrap_or(0.0);
+    let water = state["resources"]["water"].as_f64().unwrap_or(0.0);
+    let distance = state["environment"]["distance_to_land"]
+        .as_f64()
+        .unwrap_or(0.0);
+    let has_collect_rain = pending_has_action(pending, "collect_rain");
+    let has_navigation =
+        pending_has_action(pending, "study_chart") || pending_has_action(pending, "change_course");
+
+    let mut guidance = Vec::new();
+    if water < 0.75 || thirst >= 68.0 {
+        guidance.push(if has_collect_rain {
+            guidance_item(
+                catalog.as_ref(),
+                "mcp.guidance.water_available",
+                &[("collect_rain", "action.collect_rain")],
+                json!({
+                    "action": "collect_rain",
+                    "water_threshold": 0.75,
+                    "thirst_threshold": 68.0
+                }),
+            )
+        } else {
+            guidance_item(
+                catalog.as_ref(),
+                "mcp.guidance.water_watch",
+                &[("collect_rain", "action.collect_rain")],
+                json!({
+                    "action": "collect_rain",
+                    "water_threshold": 0.75,
+                    "thirst_threshold": 68.0
+                }),
+            )
+        });
+    }
+
+    if distance > 0.0 {
+        guidance.push(if has_navigation {
+            guidance_item(
+                catalog.as_ref(),
+                "mcp.guidance.navigation_available",
+                &[
+                    ("study_chart", "action.study_chart"),
+                    ("change_course", "action.change_course"),
+                ],
+                json!({
+                    "actions": ["study_chart", "change_course"],
+                    "progress_field": "distance_to_land"
+                }),
+            )
+        } else {
+            guidance_item(
+                catalog.as_ref(),
+                "mcp.guidance.navigation_watch",
+                &[
+                    ("study_chart", "action.study_chart"),
+                    ("change_course", "action.change_course"),
+                ],
+                json!({
+                    "actions": ["study_chart", "change_course"],
+                    "progress_field": "distance_to_land"
+                }),
+            )
+        });
+    }
+
+    if guidance.is_empty() {
+        guidance.push(guidance_item(
+            catalog.as_ref(),
+            "mcp.guidance.balance",
+            &[],
+            json!({}),
+        ));
+    }
+
+    json!(guidance)
+}
+
+fn guidance_catalog(snapshot: &Value) -> Option<Catalog> {
+    let scenario_id = snapshot["scenario_id"].as_str()?;
+    let config = load_scenario_config(scenario_id).ok()?;
+    let active_locale = snapshot["active_locale"]
+        .as_str()
+        .unwrap_or(&config.manifest.default_locale);
+    Some(Catalog::new(
+        active_locale.to_string(),
+        config.manifest.default_locale,
+        config.locales,
+    ))
+}
+
+fn guidance_item(
+    catalog: Option<&Catalog>,
+    key: &str,
+    label_vars: &[(&str, &str)],
+    params: Value,
+) -> Value {
+    let text = catalog.map_or_else(
+        || key.to_string(),
+        |catalog| {
+            let vars = label_vars
+                .iter()
+                .map(|(name, label_key)| (*name, catalog.text(label_key)))
+                .collect::<Vec<_>>();
+            catalog.format(key, &vars)
+        },
+    );
+    json!({
+        "key": key,
+        "text": text,
+        "params": params,
+    })
+}
+
+fn pending_has_action(pending: &Value, action_id: &str) -> bool {
+    pending["actions"]
+        .as_array()
+        .is_some_and(|actions| actions.iter().any(|action| action["id"] == action_id))
 }
 
 fn compact_world_state(state: &Value) -> Value {
@@ -406,6 +537,77 @@ mod tests {
                 .get("ui_events")
                 .is_none()
         );
+    }
+
+    #[test]
+    fn compact_state_includes_sea_survival_strategy_guidance() {
+        let snapshot = json!({
+            "run_id": "run-1",
+            "scenario_id": "sea_survival",
+            "scenario_version": "0.1.0",
+            "config_hash": "hash",
+            "active_locale": "zh-CN",
+            "tick": 24,
+            "day": 1,
+            "paused": false,
+            "outcome": null,
+            "state": {
+                "tick": 24,
+                "alive": true,
+                "outcome": null,
+                "stats": { "thirst": 84.0, "energy": 72.0 },
+                "resources": { "water": 0.3 },
+                "environment": { "risk": "Medium", "distance_to_land": 115.0 },
+                "memory": { "recent": [] },
+                "personality": { "risk_bias": 0.0 }
+            },
+            "pending_decision": {
+                "id": "tick-24-island_silhouette",
+                "tick": 24,
+                "scenario_id": "sea_survival",
+                "event": { "id": "island_silhouette" },
+                "actions": [
+                    { "id": "collect_rain" },
+                    { "id": "study_chart" },
+                    { "id": "change_course" }
+                ],
+                "state": {
+                    "tick": 24,
+                    "alive": true,
+                    "outcome": null,
+                    "stats": { "thirst": 84.0, "energy": 72.0 },
+                    "resources": { "water": 0.3 },
+                    "environment": { "risk": "Medium", "distance_to_land": 115.0 },
+                    "memory": { "recent": [] },
+                    "personality": { "risk_bias": 0.0 }
+                }
+            },
+            "logs": [],
+            "decisions": [],
+            "ui_events": [],
+            "counts": { "ui_events": 0 }
+        });
+
+        let compact = compact_tool_output("waves_get_state", snapshot);
+        let guidance = compact["guidance"]
+            .as_array()
+            .expect("guidance should be an array");
+        let keys = guidance
+            .iter()
+            .map(|item| item["key"].as_str().unwrap_or_default())
+            .collect::<Vec<_>>();
+        let text = guidance
+            .iter()
+            .map(|item| item["text"].as_str().unwrap_or_default())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        assert!(keys.contains(&"mcp.guidance.water_available"));
+        assert!(keys.contains(&"mcp.guidance.navigation_available"));
+        assert_eq!(guidance[0]["params"]["action"], "collect_rain");
+        assert!(text.contains("收集雨水"));
+        assert!(text.contains("研究海图"));
+        assert!(text.contains("改变航向"));
     }
 
     #[test]
