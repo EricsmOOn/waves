@@ -51,6 +51,8 @@ chmod +x waves-linux-x86_64
 ./waves-linux-x86_64 play
 ```
 
+Linux release 二进制使用 musl 静态链接，不依赖较新的系统 glibc。旧版 Linux 发行版和 WSL 环境推荐使用这个下载。
+
 从源码运行：
 
 ```bash

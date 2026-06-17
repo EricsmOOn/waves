@@ -51,6 +51,8 @@ chmod +x waves-linux-x86_64
 ./waves-linux-x86_64 play
 ```
 
+The Linux release binary is statically linked with musl, so it does not require a recent system glibc. This is the recommended download for older Linux distributions and WSL.
+
 Run from source:
 
 ```bash

@@ -2,6 +2,12 @@
 
 All notable changes to Waves will be documented in this file.
 
+## [0.1.2] — 2026-06-17
+
+### Changed
+
+- Linux GitHub Release binaries are now built with static musl linking to avoid newer glibc requirements on older distributions and WSL environments.
+
 ## [0.1.1] — 2026-06-17
 
 ### Added

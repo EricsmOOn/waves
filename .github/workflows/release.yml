@@ -46,38 +46,67 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+            arch: x86_64
+            rust_target: x86_64-unknown-linux-musl
           - os: macos-latest
             platform: macos
+            arch: arm64
+            rust_target: ""
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.RELEASE_TAG }}
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux musl target
+        if: matrix.rust_target == 'x86_64-unknown-linux-musl'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+          rustup target add "${{ matrix.rust_target }}"
       - name: Build release binary
         shell: bash
         run: |
           set -euo pipefail
 
+          build_args=(--release --locked)
+          binary_path="target/release/${BINARY_NAME}"
+          if [[ -n "${{ matrix.rust_target }}" ]]; then
+            build_args+=(--target "${{ matrix.rust_target }}")
+            binary_path="target/${{ matrix.rust_target }}/release/${BINARY_NAME}"
+          fi
+
           for attempt in 1 2 3; do
-            if cargo build --release --locked; then
+            if cargo build "${build_args[@]}"; then
+              echo "BINARY_PATH=${binary_path}" >> "${GITHUB_ENV}"
               exit 0
             fi
             echo "cargo build failed on attempt ${attempt}; retrying..." >&2
             sleep "$((attempt * 10))"
           done
 
-          cargo build --release --locked
+          cargo build "${build_args[@]}"
+          echo "BINARY_PATH=${binary_path}" >> "${GITHUB_ENV}"
       - name: Package release binary
         shell: bash
         run: |
           set -euo pipefail
 
-          arch="$(uname -m)"
-          asset="${BINARY_NAME}-${{ matrix.platform }}-${arch}"
+          asset="${BINARY_NAME}-${{ matrix.platform }}-${{ matrix.arch }}"
 
           mkdir -p dist
-          cp "target/release/${BINARY_NAME}" "dist/${asset}"
+          cp "${BINARY_PATH}" "dist/${asset}"
           chmod +x "dist/${asset}"
+
+          if [[ "${{ matrix.platform }}" == "linux" ]]; then
+            file "dist/${asset}"
+            if strings "dist/${asset}" | grep -q "GLIBC_"; then
+              echo "linux release binary must not require glibc symbols" >&2
+              exit 1
+            fi
+          fi
 
           (
             cd dist
