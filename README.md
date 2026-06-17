@@ -22,35 +22,33 @@ Human chat
 
 ## Quick Start
 
-The recommended path is to download a GitHub Release. Each archive includes the `waves` binary and the required `scenarios/` resources. Run Waves from inside the unpacked directory.
+The recommended path is to download a GitHub Release. Official scenarios are embedded in the binary, so there is nothing to unpack.
 
 macOS Apple Silicon:
 
 ```bash
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-macos-arm64.tar.gz
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-macos-arm64.tar.gz.sha256
-shasum -a 256 -c waves-v0.1.0-macos-arm64.tar.gz.sha256
-tar -xzf waves-v0.1.0-macos-arm64.tar.gz
-cd waves-v0.1.0-macos-arm64
-./waves play
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-macos-arm64
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-macos-arm64.sha256
+shasum -a 256 -c waves-macos-arm64.sha256
+chmod +x waves-macos-arm64
+./waves-macos-arm64 play
 ```
 
 If macOS blocks the downloaded binary:
 
 ```bash
-xattr -dr com.apple.quarantine waves
-./waves play
+xattr -dr com.apple.quarantine waves-macos-arm64
+./waves-macos-arm64 play
 ```
 
 Linux x86_64:
 
 ```bash
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-linux-x86_64.tar.gz
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-linux-x86_64.tar.gz.sha256
-sha256sum -c waves-v0.1.0-linux-x86_64.tar.gz.sha256
-tar -xzf waves-v0.1.0-linux-x86_64.tar.gz
-cd waves-v0.1.0-linux-x86_64
-./waves play
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-linux-x86_64
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-linux-x86_64.sha256
+sha256sum -c waves-linux-x86_64.sha256
+chmod +x waves-linux-x86_64
+./waves-linux-x86_64 play
 ```
 
 Run from source:
@@ -106,7 +104,8 @@ The agent advances the same run through `waves_step` / `waves_submit_decision`, 
 - Available actions narrow around the current event and urgent needs; stored food can be eaten to reduce hunger.
 - The TUI is a read-only observer with pause, resume, and quit controls.
 - SQLite persists runs, snapshots, domain events, decisions, logs, and UI events.
-- Two built-in scenarios: `sea_survival` (playable) and `desert_outpost` (experimental placeholder).
+- Two embedded scenarios: `sea_survival` (playable) and `desert_outpost` (experimental placeholder).
+- Custom scenario directories can be loaded with `--scenarios-dir`.
 - Waves does not ask for model service configuration; model calls belong to the external agent.
 
 ## MCP Tools
@@ -147,6 +146,17 @@ cargo run -- validate scenario desert_outpost
 cargo run -- inspect config sea_survival
 ```
 
+Use an external scenario directory:
+
+```bash
+./waves play --scenario my_scenario --scenarios-dir ./my-scenarios
+./waves validate --scenarios-dir ./my-scenarios scenario my_scenario
+./waves serve --scenario my_scenario --scenarios-dir ./my-scenarios
+./waves mcp --scenarios-dir ./my-scenarios
+```
+
+`--scenarios-dir` points at the root that contains scenario folders. For example, `./my-scenarios/my_scenario/scenario.toml`. When `--scenarios-dir` is omitted, Waves first checks `./scenarios/<scenario_id>` and then falls back to the embedded official scenarios.
+
 Run a local scripted smoke run:
 
 ```bash
@@ -179,11 +189,11 @@ The TUI does not submit gameplay actions. Actions must be submitted by the agent
 ```text
 src/core/          runtime, state, decisions, reports
 src/daemon/        shared local runtime daemon and socket client
-src/scenario/      scenario trait and built-in scenarios
+src/scenario/      scenario trait and built-in resolvers
 src/mcp/           MCP stdio server
 src/persistence/   SQLite persistence and replay
 src/tui/           Ratatui observer UI
-scenarios/         scenario manifests, tables, locales
+scenarios/         development copy of scenario manifests, tables, locales
 docs/              design and agent-facing documentation
 tests/             runtime, scenario, replay, TUI tests
 ```

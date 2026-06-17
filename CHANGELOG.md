@@ -2,6 +2,17 @@
 
 All notable changes to Waves will be documented in this file.
 
+## [0.1.1] — 2026-06-17
+
+### Added
+
+- Embedded official scenario content into the binary, so release builds can run `play` without unpacking a `scenarios/` directory.
+- Added `--scenarios-dir <DIR>` to load custom scenario directories explicitly.
+
+### Changed
+
+- GitHub Release assets are now direct executables plus `.sha256` files instead of `.tar.gz` archives.
+
 ## [0.1.0] — 2026-06-16
 
 ### Added

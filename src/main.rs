@@ -3,9 +3,10 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use std::time::Duration;
 use waves::app::{
-    build_session, inspect_config, replay_run, run_headless, run_play, validate_scenario,
+    build_session_with_scenarios_dir, inspect_config_with_scenarios_dir, replay_run,
+    run_headless_with_scenarios_dir, run_play, validate_scenario_with_scenarios_dir,
 };
-use waves::tui::{run_tui, run_tui_remote};
+use waves::tui::{run_tui, run_tui_remote_with_scenarios_dir};
 
 #[derive(Debug, Parser)]
 #[command(name = "waves")]
@@ -18,10 +19,14 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Validate {
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
         #[command(subcommand)]
         target: ValidateTarget,
     },
     Inspect {
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
         #[command(subcommand)]
         target: InspectTarget,
     },
@@ -42,6 +47,8 @@ enum Commands {
         seed: u64,
         #[arg(long, default_value = "data/waves.sqlite")]
         db: PathBuf,
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
     },
     Tui {
         #[arg(long, default_value = "sea_survival")]
@@ -56,6 +63,8 @@ enum Commands {
         tick_ms: u64,
         #[arg(long)]
         connect: Option<PathBuf>,
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
     },
     Serve {
         #[arg(long, default_value = "sea_survival")]
@@ -68,6 +77,8 @@ enum Commands {
         db: PathBuf,
         #[arg(long, default_value = "data/waves.sock")]
         socket: PathBuf,
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
     },
     Play {
         #[arg(long, default_value = "sea_survival")]
@@ -80,10 +91,14 @@ enum Commands {
         db: PathBuf,
         #[arg(long, default_value = "data/waves.sock")]
         socket: PathBuf,
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
     },
     Mcp {
         #[arg(long)]
         connect: Option<PathBuf>,
+        #[arg(long, value_name = "DIR")]
+        scenarios_dir: Option<PathBuf>,
     },
 }
 
@@ -100,9 +115,13 @@ enum InspectTarget {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Validate { target } => match target {
+        Commands::Validate {
+            scenarios_dir,
+            target,
+        } => match target {
             ValidateTarget::Scenario { scenario } => {
-                let errors = validate_scenario(&scenario)?;
+                let errors =
+                    validate_scenario_with_scenarios_dir(&scenario, scenarios_dir.as_deref())?;
                 if errors.is_empty() {
                     println!("scenario {scenario} is valid");
                 } else {
@@ -113,9 +132,13 @@ fn main() -> Result<()> {
                 }
             }
         },
-        Commands::Inspect { target } => match target {
+        Commands::Inspect {
+            scenarios_dir,
+            target,
+        } => match target {
             InspectTarget::Config { scenario } => {
-                let inspection = inspect_config(&scenario)?;
+                let inspection =
+                    inspect_config_with_scenarios_dir(&scenario, scenarios_dir.as_deref())?;
                 for line in inspection.lines() {
                     println!("{line}");
                 }
@@ -127,8 +150,16 @@ fn main() -> Result<()> {
             ticks,
             seed,
             db,
+            scenarios_dir,
         } => {
-            let report = run_headless(&scenario, &locale, ticks, seed, Some(db))?;
+            let report = run_headless_with_scenarios_dir(
+                &scenario,
+                &locale,
+                ticks,
+                seed,
+                Some(db),
+                scenarios_dir.as_deref(),
+            )?;
             println!("run_id: {}", report.run_id);
             println!("tick: {}", report.final_state.tick);
             println!("day: {}", report.final_state.environment.day);
@@ -158,11 +189,22 @@ fn main() -> Result<()> {
             db,
             tick_ms,
             connect,
+            scenarios_dir,
         } => {
             if let Some(socket_path) = connect {
-                run_tui_remote(socket_path, Duration::from_millis(tick_ms))?;
+                run_tui_remote_with_scenarios_dir(
+                    socket_path,
+                    Duration::from_millis(tick_ms),
+                    scenarios_dir,
+                )?;
             } else {
-                let session = build_session(&scenario, &locale, seed, Some(db))?;
+                let session = build_session_with_scenarios_dir(
+                    &scenario,
+                    &locale,
+                    seed,
+                    Some(db),
+                    scenarios_dir.as_deref(),
+                )?;
                 run_tui(session, Duration::from_millis(tick_ms))?;
             }
         }
@@ -172,14 +214,31 @@ fn main() -> Result<()> {
             seed,
             db,
             socket,
+            scenarios_dir,
         } => {
             println!("waves daemon listening on {}", socket.display());
-            println!("observer: cargo run -- tui --connect {}", socket.display());
+            let scenarios_hint = scenarios_dir
+                .as_ref()
+                .map(|path| format!(" --scenarios-dir {}", path.display()))
+                .unwrap_or_default();
             println!(
-                "mcp bridge: cargo run -- mcp --connect {}",
-                socket.display()
+                "observer: cargo run -- tui --connect {}{}",
+                socket.display(),
+                scenarios_hint
             );
-            waves::daemon::run_server(&scenario, &locale, seed, Some(db), socket)?;
+            println!(
+                "mcp bridge: cargo run -- mcp --connect {}{}",
+                socket.display(),
+                scenarios_hint
+            );
+            waves::daemon::run_server_with_scenarios_dir(
+                &scenario,
+                &locale,
+                seed,
+                Some(db),
+                socket,
+                scenarios_dir,
+            )?;
         }
         Commands::Play {
             scenario,
@@ -187,8 +246,9 @@ fn main() -> Result<()> {
             seed,
             db,
             socket,
+            scenarios_dir,
         } => {
-            run_play(&scenario, &locale, seed, Some(db), socket)?;
+            run_play(&scenario, &locale, seed, Some(db), socket, scenarios_dir)?;
         }
         Commands::Replay { run_id, db } => {
             let summary = replay_run(db, &run_id)?;
@@ -196,8 +256,11 @@ fn main() -> Result<()> {
                 println!("{line}");
             }
         }
-        Commands::Mcp { connect } => {
-            waves::mcp::run_stdio(connect)?;
+        Commands::Mcp {
+            connect,
+            scenarios_dir,
+        } => {
+            waves::mcp::run_stdio_with_scenarios_dir(connect, scenarios_dir)?;
         }
     }
     Ok(())

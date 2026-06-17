@@ -1,6 +1,6 @@
 [package]
 name = "waves"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A TUI + MCP real-time game framework for external AI agents"
 repository = "https://github.com/EricsmOOn/waves"

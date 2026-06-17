@@ -1,10 +1,10 @@
 use crate::config::{
-    ValidationError, load_scenario_config, registered_action_resolvers, registered_event_resolvers,
-    validate_config,
+    ValidationError, load_scenario_config_with_scenarios_dir, registered_action_resolvers,
+    registered_event_resolvers, validate_config,
 };
 use crate::core::{ExternalDecisionInput, RuntimeSession, SessionOptions, WorldState};
 use crate::persistence::{ReplaySummary, SqliteStore, replay_summary};
-use crate::tui::run_tui_remote_with_hint;
+use crate::tui::run_tui_remote_with_hint_and_scenarios_dir;
 use anyhow::{Context, Result, bail};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
@@ -76,12 +76,26 @@ impl ConfigInspection {
 }
 
 pub fn validate_scenario(scenario_id: &str) -> Result<Vec<ValidationError>> {
-    let config = load_scenario_config(scenario_id)?;
+    validate_scenario_with_scenarios_dir(scenario_id, None)
+}
+
+pub fn validate_scenario_with_scenarios_dir(
+    scenario_id: &str,
+    scenarios_dir: Option<&Path>,
+) -> Result<Vec<ValidationError>> {
+    let config = load_scenario_config_with_scenarios_dir(scenario_id, scenarios_dir)?;
     Ok(validate_config(&config))
 }
 
 pub fn inspect_config(scenario_id: &str) -> Result<ConfigInspection> {
-    let config = load_scenario_config(scenario_id)?;
+    inspect_config_with_scenarios_dir(scenario_id, None)
+}
+
+pub fn inspect_config_with_scenarios_dir(
+    scenario_id: &str,
+    scenarios_dir: Option<&Path>,
+) -> Result<ConfigInspection> {
+    let config = load_scenario_config_with_scenarios_dir(scenario_id, scenarios_dir)?;
     let mut locales = config
         .locales
         .iter()
@@ -119,7 +133,17 @@ pub fn build_session(
     seed: u64,
     db_path: Option<PathBuf>,
 ) -> Result<RuntimeSession> {
-    let config = load_scenario_config(scenario_id)?;
+    build_session_with_scenarios_dir(scenario_id, locale, seed, db_path, None)
+}
+
+pub fn build_session_with_scenarios_dir(
+    scenario_id: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    scenarios_dir: Option<&Path>,
+) -> Result<RuntimeSession> {
+    let config = load_scenario_config_with_scenarios_dir(scenario_id, scenarios_dir)?;
     let errors = validate_config(&config);
     if !errors.is_empty() {
         for error in &errors {
@@ -153,28 +177,36 @@ pub fn run_play(
     seed: u64,
     db_path: Option<PathBuf>,
     socket_path: PathBuf,
+    scenarios_dir: Option<PathBuf>,
 ) -> Result<()> {
     let abs_socket = absolute_socket_path(&socket_path)?;
     let hint = play_connection_hint(&abs_socket);
 
     let (startup_tx, startup_rx) = mpsc::channel();
     let server_socket = abs_socket.clone();
+    let server_scenarios_dir = scenarios_dir.clone();
     let s = scenario.to_string();
     let l = locale.to_string();
     std::thread::spawn(move || {
-        let _ = crate::daemon::run_server_with_startup_status(
+        let _ = crate::daemon::run_server_with_startup_status_and_scenarios_dir(
             &s,
             &l,
             seed,
             db_path,
             server_socket,
             startup_tx,
+            server_scenarios_dir,
         );
     });
 
     wait_for_daemon_start(&startup_rx, &abs_socket, Duration::from_secs(10))?;
 
-    run_tui_remote_with_hint(abs_socket, Duration::from_millis(800), hint)
+    run_tui_remote_with_hint_and_scenarios_dir(
+        abs_socket,
+        Duration::from_millis(800),
+        hint,
+        scenarios_dir,
+    )
 }
 
 fn absolute_socket_path(socket_path: &Path) -> Result<PathBuf> {
@@ -213,7 +245,19 @@ pub fn run_headless(
     seed: u64,
     db_path: Option<PathBuf>,
 ) -> Result<HeadlessReport> {
-    let mut session = build_session(scenario_id, locale, seed, db_path)?;
+    run_headless_with_scenarios_dir(scenario_id, locale, ticks, seed, db_path, None)
+}
+
+pub fn run_headless_with_scenarios_dir(
+    scenario_id: &str,
+    locale: &str,
+    ticks: u64,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    scenarios_dir: Option<&Path>,
+) -> Result<HeadlessReport> {
+    let mut session =
+        build_session_with_scenarios_dir(scenario_id, locale, seed, db_path, scenarios_dir)?;
     run_scripted_ticks(&mut session, ticks)?;
     session.save_snapshot_now()?;
     Ok(HeadlessReport {

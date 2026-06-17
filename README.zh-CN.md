@@ -22,35 +22,33 @@ Human chat
 
 ## 快速开始
 
-推荐直接下载 GitHub Release。当前发布包已经包含 `waves` 二进制和 `scenarios/` 场景资源；解压后请在解压目录内运行。
+推荐直接下载 GitHub Release。官方场景已经内置到二进制里，不需要解压资源目录。
 
 macOS Apple Silicon:
 
 ```bash
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-macos-arm64.tar.gz
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-macos-arm64.tar.gz.sha256
-shasum -a 256 -c waves-v0.1.0-macos-arm64.tar.gz.sha256
-tar -xzf waves-v0.1.0-macos-arm64.tar.gz
-cd waves-v0.1.0-macos-arm64
-./waves play
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-macos-arm64
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-macos-arm64.sha256
+shasum -a 256 -c waves-macos-arm64.sha256
+chmod +x waves-macos-arm64
+./waves-macos-arm64 play
 ```
 
 如果 macOS 拦截下载的二进制：
 
 ```bash
-xattr -dr com.apple.quarantine waves
-./waves play
+xattr -dr com.apple.quarantine waves-macos-arm64
+./waves-macos-arm64 play
 ```
 
 Linux x86_64:
 
 ```bash
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-linux-x86_64.tar.gz
-curl -L -O https://github.com/EricsmOOn/waves/releases/download/v0.1.0/waves-v0.1.0-linux-x86_64.tar.gz.sha256
-sha256sum -c waves-v0.1.0-linux-x86_64.tar.gz.sha256
-tar -xzf waves-v0.1.0-linux-x86_64.tar.gz
-cd waves-v0.1.0-linux-x86_64
-./waves play
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-linux-x86_64
+curl -L -O https://github.com/EricsmOOn/waves/releases/latest/download/waves-linux-x86_64.sha256
+sha256sum -c waves-linux-x86_64.sha256
+chmod +x waves-linux-x86_64
+./waves-linux-x86_64 play
 ```
 
 从源码运行：
@@ -106,7 +104,8 @@ agent 通过 `waves_step` / `waves_submit_decision` 推进同一个 run，TUI �
 - 行动会按当前事件和危急状态收敛；食物库存可以通过“进食”缓解饥饿。
 - TUI 是只读观察窗口，保留暂停、继续、退出。
 - SQLite 持久化 run、snapshot、domain events、decisions、logs 和 UI events。
-- 内置两个场景：`sea_survival`（可玩）和 `desert_outpost`（实验性占位，待实现）。
+- 二进制内置两个场景：`sea_survival`（可玩）和 `desert_outpost`（实验性占位，待实现）。
+- 自定义场景目录可以通过 `--scenarios-dir` 加载。
 - 不需要在 Waves 内输入模型服务配置；模型调用属于外部 agent。
 
 ## MCP 工具
@@ -147,6 +146,17 @@ cargo run -- validate scenario desert_outpost
 cargo run -- inspect config sea_survival
 ```
 
+使用外部场景目录：
+
+```bash
+./waves play --scenario my_scenario --scenarios-dir ./my-scenarios
+./waves validate --scenarios-dir ./my-scenarios scenario my_scenario
+./waves serve --scenario my_scenario --scenarios-dir ./my-scenarios
+./waves mcp --scenarios-dir ./my-scenarios
+```
+
+`--scenarios-dir` 指向包含场景子目录的根目录。例如 `./my-scenarios/my_scenario/scenario.toml`。不传 `--scenarios-dir` 时，Waves 会先检查 `./scenarios/<scenario_id>`，找不到时再使用二进制内置的官方场景。
+
 运行一个本地 scripted smoke run：
 
 ```bash
@@ -179,11 +189,11 @@ TUI 不提供游戏策略控制。行动必须通过 MCP 由 agent 提交。
 ```text
 src/core/          runtime, state, decisions, reports
 src/daemon/        shared local runtime daemon and socket client
-src/scenario/      scenario trait and built-in scenarios
+src/scenario/      scenario trait and built-in resolvers
 src/mcp/           MCP stdio server
 src/persistence/   SQLite persistence and replay
 src/tui/           Ratatui observer UI
-scenarios/         scenario manifests, tables, locales
+scenarios/         开发用 scenario manifests, tables, locales 副本
 docs/              design and agent-facing documentation
 tests/             runtime, scenario, replay, TUI tests
 ```

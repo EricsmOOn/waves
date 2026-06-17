@@ -1,4 +1,4 @@
-use crate::app::build_session;
+use crate::app::build_session_with_scenarios_dir;
 use crate::core::{DecisionRecord, ExternalDecisionInput, LogEntry, PendingDecision, WorldState};
 use crate::tui::UiEvent;
 use anyhow::{Context, Result, anyhow, bail};
@@ -64,6 +64,7 @@ pub struct StartRunArgs {
     pub locale: Option<String>,
     pub seed: Option<u64>,
     pub db_path: Option<String>,
+    pub scenarios_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -79,12 +80,28 @@ pub struct GetStateArgs {
 #[derive(Default)]
 pub struct SessionHost {
     session: Option<RuntimeSession>,
+    scenarios_dir: Option<PathBuf>,
 }
 
 impl SessionHost {
     pub fn with_session(session: RuntimeSession) -> Self {
+        Self::with_session_and_scenarios_dir(session, None)
+    }
+
+    pub fn with_session_and_scenarios_dir(
+        session: RuntimeSession,
+        scenarios_dir: Option<PathBuf>,
+    ) -> Self {
         Self {
             session: Some(session),
+            scenarios_dir,
+        }
+    }
+
+    pub fn with_scenarios_dir(scenarios_dir: Option<PathBuf>) -> Self {
+        Self {
+            session: None,
+            scenarios_dir,
         }
     }
 
@@ -147,11 +164,16 @@ impl SessionHost {
     fn start_run(&mut self, params: Value) -> Result<Value> {
         let args: StartRunArgs = from_value_or_empty(params)?;
         let db_path = args.db_path.map(PathBuf::from);
-        let session = build_session(
+        let scenarios_dir = args
+            .scenarios_dir
+            .map(PathBuf::from)
+            .or_else(|| self.scenarios_dir.clone());
+        let session = build_session_with_scenarios_dir(
             args.scenario.as_deref().unwrap_or("sea_survival"),
             args.locale.as_deref().unwrap_or("zh-CN"),
             args.seed.unwrap_or(42),
             db_path,
+            scenarios_dir.as_deref(),
         )?;
         let snapshot = session_snapshot(&session);
         self.session = Some(session);
@@ -204,7 +226,26 @@ pub fn run_server(
     db_path: Option<PathBuf>,
     socket_path: PathBuf,
 ) -> Result<()> {
-    run_server_inner(scenario, locale, seed, db_path, socket_path, None)
+    run_server_inner(scenario, locale, seed, db_path, socket_path, None, None)
+}
+
+pub fn run_server_with_scenarios_dir(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: PathBuf,
+    scenarios_dir: Option<PathBuf>,
+) -> Result<()> {
+    run_server_inner(
+        scenario,
+        locale,
+        seed,
+        db_path,
+        socket_path,
+        scenarios_dir,
+        None,
+    )
 }
 
 pub fn run_server_with_startup_status(
@@ -215,7 +256,35 @@ pub fn run_server_with_startup_status(
     socket_path: PathBuf,
     startup: Sender<Result<(), String>>,
 ) -> Result<()> {
-    run_server_inner(scenario, locale, seed, db_path, socket_path, Some(startup))
+    run_server_inner(
+        scenario,
+        locale,
+        seed,
+        db_path,
+        socket_path,
+        None,
+        Some(startup),
+    )
+}
+
+pub fn run_server_with_startup_status_and_scenarios_dir(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: PathBuf,
+    startup: Sender<Result<(), String>>,
+    scenarios_dir: Option<PathBuf>,
+) -> Result<()> {
+    run_server_inner(
+        scenario,
+        locale,
+        seed,
+        db_path,
+        socket_path,
+        scenarios_dir,
+        Some(startup),
+    )
 }
 
 fn run_server_inner(
@@ -224,9 +293,11 @@ fn run_server_inner(
     seed: u64,
     db_path: Option<PathBuf>,
     socket_path: PathBuf,
+    scenarios_dir: Option<PathBuf>,
     startup: Option<Sender<Result<(), String>>>,
 ) -> Result<()> {
-    let startup_result = start_listener(scenario, locale, seed, db_path, &socket_path);
+    let startup_result =
+        start_listener(scenario, locale, seed, db_path, &socket_path, scenarios_dir);
     let (mut host, listener) = match startup_result {
         Ok(server) => {
             notify_startup(&startup, Ok(()));
@@ -259,10 +330,17 @@ fn start_listener(
     seed: u64,
     db_path: Option<PathBuf>,
     socket_path: &Path,
+    scenarios_dir: Option<PathBuf>,
 ) -> Result<(SessionHost, UnixListener)> {
     prepare_socket(socket_path)?;
-    let session = build_session(scenario, locale, seed, db_path)?;
-    let host = SessionHost::with_session(session);
+    let session = build_session_with_scenarios_dir(
+        scenario,
+        locale,
+        seed,
+        db_path,
+        scenarios_dir.as_deref(),
+    )?;
+    let host = SessionHost::with_session_and_scenarios_dir(session, scenarios_dir);
     let listener = UnixListener::bind(socket_path)
         .with_context(|| format!("binding socket {}", socket_path.display()))?;
     Ok((host, listener))

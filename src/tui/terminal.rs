@@ -1,4 +1,4 @@
-use crate::config::load_scenario_config;
+use crate::config::load_scenario_config_with_scenarios_dir;
 use crate::core::RuntimeSession;
 use crate::daemon::{DaemonClient, SessionSnapshot};
 use crate::i18n::Catalog;
@@ -23,8 +23,17 @@ pub fn run_tui_remote_with_hint(
     tick_rate: Duration,
     connection_hint: String,
 ) -> Result<()> {
+    run_tui_remote_with_hint_and_scenarios_dir(socket_path, tick_rate, connection_hint, None)
+}
+
+pub fn run_tui_remote_with_hint_and_scenarios_dir(
+    socket_path: PathBuf,
+    tick_rate: Duration,
+    connection_hint: String,
+    scenarios_dir: Option<PathBuf>,
+) -> Result<()> {
     let client = DaemonClient::new(socket_path);
-    let mut catalog_cache = RemoteCatalogCache::default();
+    let mut catalog_cache = RemoteCatalogCache::new(scenarios_dir);
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -107,8 +116,16 @@ fn run_tui_loop(
 }
 
 pub fn run_tui_remote(socket_path: PathBuf, tick_rate: Duration) -> Result<()> {
+    run_tui_remote_with_scenarios_dir(socket_path, tick_rate, None)
+}
+
+pub fn run_tui_remote_with_scenarios_dir(
+    socket_path: PathBuf,
+    tick_rate: Duration,
+    scenarios_dir: Option<PathBuf>,
+) -> Result<()> {
     let client = DaemonClient::new(socket_path);
-    let mut catalog_cache = RemoteCatalogCache::default();
+    let mut catalog_cache = RemoteCatalogCache::new(scenarios_dir);
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -180,9 +197,18 @@ fn restore_terminal(terminal: &mut AppTerminal) -> Result<()> {
 struct RemoteCatalogCache {
     key: Option<(String, String, String)>,
     catalog: Option<Catalog>,
+    scenarios_dir: Option<PathBuf>,
 }
 
 impl RemoteCatalogCache {
+    fn new(scenarios_dir: Option<PathBuf>) -> Self {
+        Self {
+            key: None,
+            catalog: None,
+            scenarios_dir,
+        }
+    }
+
     fn catalog_for(&mut self, snapshot: &SessionSnapshot) -> Result<&Catalog> {
         let key = (
             snapshot.scenario_id.clone(),
@@ -190,7 +216,10 @@ impl RemoteCatalogCache {
             snapshot.config_hash.clone(),
         );
         if self.key.as_ref() != Some(&key) {
-            let config = load_scenario_config(&snapshot.scenario_id)?;
+            let config = load_scenario_config_with_scenarios_dir(
+                &snapshot.scenario_id,
+                self.scenarios_dir.as_deref(),
+            )?;
             self.catalog = Some(Catalog::new(
                 snapshot.active_locale.clone(),
                 config.manifest.default_locale,

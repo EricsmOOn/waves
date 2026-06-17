@@ -6,9 +6,16 @@ use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 
 pub fn run_stdio(connect: Option<PathBuf>) -> Result<()> {
+    run_stdio_with_scenarios_dir(connect, None)
+}
+
+pub fn run_stdio_with_scenarios_dir(
+    connect: Option<PathBuf>,
+    scenarios_dir: Option<PathBuf>,
+) -> Result<()> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
-    let mut server = McpServer::new(connect);
+    let mut server = McpServer::new(connect, scenarios_dir);
 
     for line in stdin.lock().lines() {
         let line = line?;
@@ -50,10 +57,10 @@ enum McpBackend {
 }
 
 impl McpServer {
-    fn new(connect: Option<PathBuf>) -> Self {
+    fn new(connect: Option<PathBuf>, scenarios_dir: Option<PathBuf>) -> Self {
         let backend = match connect {
             Some(path) => McpBackend::Remote(DaemonClient::new(path)),
-            None => McpBackend::Local(Box::default()),
+            None => McpBackend::Local(Box::new(SessionHost::with_scenarios_dir(scenarios_dir))),
         };
         Self { backend }
     }
@@ -281,7 +288,8 @@ fn tools() -> Vec<Value> {
                     "scenario": { "type": "string", "default": "sea_survival" },
                     "locale": { "type": "string", "default": "zh-CN" },
                     "seed": { "type": "integer", "default": 42 },
-                    "db_path": { "type": "string" }
+                    "db_path": { "type": "string" },
+                    "scenarios_dir": { "type": "string" }
                 }
             }
         }),

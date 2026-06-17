@@ -67,36 +67,30 @@ jobs:
           done
 
           cargo build --release --locked
-      - name: Package release archive
+      - name: Package release binary
         shell: bash
         run: |
           set -euo pipefail
 
           arch="$(uname -m)"
-          package="${BINARY_NAME}-${RELEASE_TAG}-${{ matrix.platform }}-${arch}"
-          package_dir="dist/${package}"
-          archive="${package}.tar.gz"
+          asset="${BINARY_NAME}-${{ matrix.platform }}-${arch}"
 
-          mkdir -p "${package_dir}"
-          cp "target/release/${BINARY_NAME}" "${package_dir}/"
-          cp -R scenarios "${package_dir}/scenarios"
-          cp README.md README.zh-CN.md LICENSE CHANGELOG.md "${package_dir}/"
+          mkdir -p dist
+          cp "target/release/${BINARY_NAME}" "dist/${asset}"
+          chmod +x "dist/${asset}"
 
-          tar -czf "dist/${archive}" -C dist "${package}"
           (
             cd dist
             if command -v shasum >/dev/null 2>&1; then
-              shasum -a 256 "${archive}" > "${archive}.sha256"
+              shasum -a 256 "${asset}" > "${asset}.sha256"
             else
-              sha256sum "${archive}" > "${archive}.sha256"
+              sha256sum "${asset}" > "${asset}.sha256"
             fi
           )
       - uses: actions/upload-artifact@v6
         with:
           name: release-${{ matrix.platform }}
-          path: |
-            dist/*.tar.gz
-            dist/*.sha256
+          path: dist/*
           if-no-files-found: error
 
   publish:
@@ -119,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t assets < <(find dist -type f \( -name "*.tar.gz" -o -name "*.sha256" \) | sort)
+          mapfile -t assets < <(find dist -type f | sort)
           if [[ "${#assets[@]}" -eq 0 ]]; then
             echo "no release assets found" >&2
             exit 1
