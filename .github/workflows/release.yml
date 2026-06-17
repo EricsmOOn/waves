@@ -80,7 +80,7 @@ jobs:
           mkdir -p "${package_dir}"
           cp "target/release/${BINARY_NAME}" "${package_dir}/"
           cp -R scenarios "${package_dir}/scenarios"
-          cp README.md LICENSE CHANGELOG.md "${package_dir}/"
+          cp README.md README.zh-CN.md LICENSE CHANGELOG.md "${package_dir}/"
 
           tar -czf "dist/${archive}" -C dist "${package}"
           (
