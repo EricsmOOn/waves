@@ -74,6 +74,40 @@ fn daemon_get_state_advances_presentation_frame_only_when_requested() {
 }
 
 #[test]
+fn daemon_records_recent_agent_activity_without_advancing_game() {
+    let session =
+        build_external_session("sea_survival", "zh-CN", 42, None).expect("session should build");
+    let mut host = SessionHost::with_session(session);
+
+    let before: SessionSnapshot = serde_json::from_value(
+        host.handle("get_state", json!({}))
+            .expect("get_state should succeed"),
+    )
+    .expect("get_state should return snapshot");
+    assert!(!before.agent_connection.seen);
+
+    host.handle(
+        "record_agent_activity",
+        json!({ "tool": "waves_get_state" }),
+    )
+    .expect("recording activity should succeed");
+
+    let after: SessionSnapshot = serde_json::from_value(
+        host.handle("get_state", json!({}))
+            .expect("get_state should succeed"),
+    )
+    .expect("get_state should return snapshot");
+
+    assert_eq!(after.tick, before.tick);
+    assert!(after.agent_connection.seen);
+    assert_eq!(
+        after.agent_connection.last_tool.as_deref(),
+        Some("waves_get_state")
+    );
+    assert_eq!(after.agent_connection.last_active_secs_ago, Some(0));
+}
+
+#[test]
 fn daemon_reports_startup_error_when_socket_is_already_serving() {
     let socket = unique_socket_path("already-serving");
     let _ = std::fs::remove_file(&socket);

@@ -107,7 +107,11 @@ impl McpServer {
         };
         let raw = match &mut self.backend {
             McpBackend::Local(host) => host.handle(method, arguments),
-            McpBackend::Remote(client) => client.request_value(method, arguments),
+            McpBackend::Remote(client) => {
+                let result = client.request_value(method, arguments);
+                let _ = client.request_value("record_agent_activity", json!({ "tool": name }));
+                result
+            }
         }?;
         Ok(compact_tool_output(name, raw))
     }
@@ -141,6 +145,7 @@ fn compact_snapshot(snapshot: &Value) -> Value {
         "day": snapshot["day"],
         "paused": snapshot["paused"],
         "outcome": snapshot["outcome"],
+        "agent_connection": snapshot["agent_connection"],
         "state": compact_world_state(&snapshot["state"]),
         "pending_decision": compact_pending_decision(&snapshot["pending_decision"]),
         "recent_logs": recent_items(&snapshot["logs"], 5),

@@ -26,6 +26,10 @@ label.waiting,waiting,ui label
 label.actions,Actions,ui label
 label.run,run,ui label
 label.config,config,ui label
+agent.status.waiting,Agent status: waiting for MCP tool call,status label
+agent.status.connected_now,Agent status: connected just now via {tool},status label
+agent.status.connected_seconds,Agent status: connected {seconds}s ago via {tool},status label
+agent.status.connected_minutes,Agent status: connected {minutes}m ago via {tool},status label
 control.quit,q quit,control label
 control.pause,p/space pause,control label
 control.paused,Run paused,control message
@@ -115,4 +119,4 @@ resolution.study_chart.failure,Map reading stayed unclear,resolution
 resolution.change_course.success,Route worked and {target} -{amount} {unit},resolution
 resolution.change_course.failure,Route drifted and {target} +{amount} {unit},resolution
 resolution.default,Action produced no clear result,resolution
-play.share_hint,Copy to agent: cargo run -- mcp --connect {socket},control
+play.share_hint,Agent MCP command: {command},control

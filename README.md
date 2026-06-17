@@ -71,7 +71,23 @@ The simplest path is one-command play mode:
 ./waves play
 ```
 
-The TUI footer prints the MCP connection command. Configure your MCP client to run that command, then the agent can advance the game through MCP tools.
+The TUI footer prints the complete MCP command for the binary you are running, for example:
+
+```text
+Agent MCP command: '/path/to/waves' mcp --connect '/path/to/data/waves.sock'
+Agent status: waiting for MCP tool call
+```
+
+Give that command to your agent or MCP client. A useful first prompt is:
+
+```text
+Use this MCP server to play Waves:
+'/path/to/waves' mcp --connect '/path/to/data/waves.sock'
+
+After connecting, call waves_get_state. Then keep using waves_step until a pending decision appears, choose one available action with waves_submit_decision, read the result, and repeat.
+```
+
+Once the agent calls any Waves MCP tool, the TUI footer changes from waiting to connected and shows the most recent tool activity.
 
 If you want to start the daemon, MCP server, and TUI separately:
 

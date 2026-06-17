@@ -87,6 +87,7 @@ fn run_tui_loop(
                 current_frame: session.presentation_frame,
                 paused: session.paused,
                 connection_hint: None,
+                agent_connection: None,
             };
             render_app(frame, &view);
         })?;
@@ -164,6 +165,7 @@ fn run_tui_remote_loop(
                 current_frame: snapshot.presentation_frame,
                 paused: snapshot.paused,
                 connection_hint,
+                agent_connection: Some(&snapshot.agent_connection),
             };
             render_app(frame, &view);
         })?;
