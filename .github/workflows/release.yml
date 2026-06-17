@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to release, for example v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  BINARY_NAME: waves
+  CARGO_TERM_COLOR: always
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+      - run: cargo package --list
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build release binary
+        run: cargo build --release --locked
+      - name: Package release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          arch="$(uname -m)"
+          package="${BINARY_NAME}-${RELEASE_TAG}-${{ matrix.platform }}-${arch}"
+          package_dir="dist/${package}"
+          archive="${package}.tar.gz"
+
+          mkdir -p "${package_dir}"
+          cp "target/release/${BINARY_NAME}" "${package_dir}/"
+          cp -R scenarios "${package_dir}/scenarios"
+          cp README.md LICENSE CHANGELOG.md "${package_dir}/"
+
+          tar -czf "dist/${archive}" -C dist "${package}"
+          (
+            cd dist
+            if command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "${archive}" > "${archive}.sha256"
+            else
+              sha256sum "${archive}" > "${archive}.sha256"
+            fi
+          )
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t assets < <(find dist -type f \( -name "*.tar.gz" -o -name "*.sha256" \) | sort)
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "no release assets found" >&2
+            exit 1
+          fi
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" "${assets[@]}" --clobber
+          else
+            gh release create "${RELEASE_TAG}" "${assets[@]}" \
+              --title "${RELEASE_TAG}" \
+              --generate-notes \
+              --verify-tag
+          fi
