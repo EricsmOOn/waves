@@ -6,7 +6,8 @@ use crate::core::{ExternalDecisionInput, RuntimeSession, SessionOptions, WorldSt
 use crate::persistence::{ReplaySummary, SqliteStore, replay_summary};
 use crate::tui::run_tui_remote_with_hint;
 use anyhow::{Context, Result, bail};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -153,33 +154,56 @@ pub fn run_play(
     db_path: Option<PathBuf>,
     socket_path: PathBuf,
 ) -> Result<()> {
-    let hint = socket_path.display().to_string();
-    let abs_socket = std::path::absolute(&socket_path)
-        .with_context(|| format!("resolving socket path {}", socket_path.display()))?;
+    let abs_socket = absolute_socket_path(&socket_path)?;
+    let hint = play_connection_hint(&abs_socket);
 
-    // Spawn daemon in background thread
+    let (startup_tx, startup_rx) = mpsc::channel();
     let server_socket = abs_socket.clone();
     let s = scenario.to_string();
     let l = locale.to_string();
     std::thread::spawn(move || {
-        if let Err(e) = crate::daemon::run_server(&s, &l, seed, db_path, server_socket) {
-            eprintln!("daemon error: {e:#}");
-        }
+        let _ = crate::daemon::run_server_with_startup_status(
+            &s,
+            &l,
+            seed,
+            db_path,
+            server_socket,
+            startup_tx,
+        );
     });
 
-    // Wait for socket to be connectable
-    let deadline = std::time::Instant::now() + Duration::from_secs(10);
-    loop {
-        if std::os::unix::net::UnixStream::connect(&abs_socket).is_ok() {
-            break;
-        }
-        if std::time::Instant::now() > deadline {
-            bail!("daemon did not start within 10 seconds (socket: {})", abs_socket.display());
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    }
+    wait_for_daemon_start(&startup_rx, &abs_socket, Duration::from_secs(10))?;
 
     run_tui_remote_with_hint(abs_socket, Duration::from_millis(800), hint)
+}
+
+fn absolute_socket_path(socket_path: &Path) -> Result<PathBuf> {
+    std::path::absolute(socket_path)
+        .with_context(|| format!("resolving socket path {}", socket_path.display()))
+}
+
+fn play_connection_hint(abs_socket: &Path) -> String {
+    abs_socket.display().to_string()
+}
+
+fn wait_for_daemon_start(
+    startup_rx: &Receiver<Result<(), String>>,
+    socket_path: &Path,
+    timeout: Duration,
+) -> Result<()> {
+    match startup_rx.recv_timeout(timeout) {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => bail!("daemon failed to start: {error}"),
+        Err(RecvTimeoutError::Timeout) => bail!(
+            "daemon did not start within {} seconds (socket: {})",
+            timeout.as_secs(),
+            socket_path.display()
+        ),
+        Err(RecvTimeoutError::Disconnected) => bail!(
+            "daemon exited before reporting startup status (socket: {})",
+            socket_path.display()
+        ),
+    }
 }
 
 pub fn run_headless(
@@ -236,4 +260,39 @@ fn submit_scripted_decision(session: &mut RuntimeSession) -> Result<()> {
 pub fn replay_run(db_path: PathBuf, run_id: &str) -> Result<ReplaySummary> {
     let store = SqliteStore::open(db_path)?;
     replay_summary(&store, run_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Instant;
+
+    #[test]
+    fn play_connection_hint_uses_absolute_socket_path() {
+        let socket =
+            absolute_socket_path(Path::new("data/waves.sock")).expect("socket path should resolve");
+        let hint = play_connection_hint(&socket);
+
+        assert!(Path::new(&hint).is_absolute());
+        assert!(hint.ends_with("data/waves.sock"));
+    }
+
+    #[test]
+    fn wait_for_daemon_start_returns_reported_error_without_timeout() {
+        let (startup_tx, startup_rx) = mpsc::channel();
+        startup_tx
+            .send(Err("scenario load failed".to_string()))
+            .expect("startup status should send");
+
+        let started = Instant::now();
+        let error = wait_for_daemon_start(
+            &startup_rx,
+            Path::new("/tmp/waves-test.sock"),
+            Duration::from_secs(10),
+        )
+        .expect_err("startup error should be returned");
+
+        assert!(started.elapsed() < Duration::from_secs(1));
+        assert!(format!("{error:#}").contains("scenario load failed"));
+    }
 }

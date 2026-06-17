@@ -8,6 +8,7 @@ use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
+use std::sync::mpsc::Sender;
 
 use crate::core::RuntimeSession;
 
@@ -203,11 +204,39 @@ pub fn run_server(
     db_path: Option<PathBuf>,
     socket_path: PathBuf,
 ) -> Result<()> {
-    prepare_socket(&socket_path)?;
-    let session = build_session(scenario, locale, seed, db_path)?;
-    let mut host = SessionHost::with_session(session);
-    let listener = UnixListener::bind(&socket_path)
-        .with_context(|| format!("binding socket {}", socket_path.display()))?;
+    run_server_inner(scenario, locale, seed, db_path, socket_path, None)
+}
+
+pub fn run_server_with_startup_status(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: PathBuf,
+    startup: Sender<Result<(), String>>,
+) -> Result<()> {
+    run_server_inner(scenario, locale, seed, db_path, socket_path, Some(startup))
+}
+
+fn run_server_inner(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: PathBuf,
+    startup: Option<Sender<Result<(), String>>>,
+) -> Result<()> {
+    let startup_result = start_listener(scenario, locale, seed, db_path, &socket_path);
+    let (mut host, listener) = match startup_result {
+        Ok(server) => {
+            notify_startup(&startup, Ok(()));
+            server
+        }
+        Err(error) => {
+            notify_startup(&startup, Err(format!("{error:#}")));
+            return Err(error);
+        }
+    };
 
     for stream in listener.incoming() {
         match stream {
@@ -222,6 +251,27 @@ pub fn run_server(
         }
     }
     Ok(())
+}
+
+fn start_listener(
+    scenario: &str,
+    locale: &str,
+    seed: u64,
+    db_path: Option<PathBuf>,
+    socket_path: &Path,
+) -> Result<(SessionHost, UnixListener)> {
+    prepare_socket(socket_path)?;
+    let session = build_session(scenario, locale, seed, db_path)?;
+    let host = SessionHost::with_session(session);
+    let listener = UnixListener::bind(socket_path)
+        .with_context(|| format!("binding socket {}", socket_path.display()))?;
+    Ok((host, listener))
+}
+
+fn notify_startup(startup: &Option<Sender<Result<(), String>>>, status: Result<(), String>) {
+    if let Some(startup) = startup {
+        let _ = startup.send(status);
+    }
 }
 
 fn prepare_socket(path: &Path) -> Result<()> {

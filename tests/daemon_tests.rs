@@ -1,6 +1,10 @@
 use serde_json::{Value, json};
 use waves::app::build_external_session;
-use waves::daemon::{SessionHost, SessionSnapshot};
+use waves::daemon::{SessionHost, SessionSnapshot, run_server_with_startup_status};
+
+use std::os::unix::net::UnixListener;
+use std::sync::mpsc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[test]
 fn daemon_host_preserves_session_across_step_and_decision() {
@@ -69,6 +73,45 @@ fn daemon_get_state_advances_presentation_frame_only_when_requested() {
     assert_eq!(advanced.presentation_frame, 1);
 }
 
+#[test]
+fn daemon_reports_startup_error_when_socket_is_already_serving() {
+    let socket = unique_socket_path("already-serving");
+    let _ = std::fs::remove_file(&socket);
+    let listener = UnixListener::bind(&socket).expect("test listener should bind socket");
+    let (startup_tx, startup_rx) = mpsc::channel();
+
+    let error = run_server_with_startup_status(
+        "sea_survival",
+        "zh-CN",
+        42,
+        None,
+        socket.clone(),
+        startup_tx,
+    )
+    .expect_err("server should reject an active socket");
+
+    assert!(format!("{error:#}").contains("already serving"));
+    let startup_error = startup_rx
+        .recv_timeout(Duration::from_secs(1))
+        .expect("startup status should be reported")
+        .expect_err("startup status should report failure");
+    assert!(startup_error.contains("already serving"));
+
+    drop(listener);
+    let _ = std::fs::remove_file(&socket);
+}
+
 fn state_from_submit(value: Value) -> serde_json::Result<SessionSnapshot> {
     serde_json::from_value(value["state"].clone())
+}
+
+fn unique_socket_path(label: &str) -> std::path::PathBuf {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock should be after unix epoch")
+        .as_nanos();
+    std::env::temp_dir().join(format!(
+        "waves-{label}-{}-{unique}.sock",
+        std::process::id()
+    ))
 }

@@ -377,11 +377,10 @@ fn render_footer(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
     );
 
     if let Some(socket_path) = view.connection_hint {
-        let hint = view.catalog.format("play.share_hint", &[("socket", socket_path.to_string())]);
-        let lines = vec![
-            Line::from(hint),
-            Line::from(controls),
-        ];
+        let hint = view
+            .catalog
+            .format("play.share_hint", &[("socket", socket_path.to_string())]);
+        let lines = vec![Line::from(hint), Line::from(controls)];
         frame.render_widget(
             Paragraph::new(lines)
                 .style(Theme::style(StyleRole::Muted))

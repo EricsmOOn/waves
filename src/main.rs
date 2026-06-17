@@ -2,7 +2,9 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use std::time::Duration;
-use waves::app::{build_session, inspect_config, replay_run, run_headless, run_play, validate_scenario};
+use waves::app::{
+    build_session, inspect_config, replay_run, run_headless, run_play, validate_scenario,
+};
 use waves::tui::{run_tui, run_tui_remote};
 
 #[derive(Debug, Parser)]
