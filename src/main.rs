@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use waves::app::{
     build_session_with_scenarios_dir, inspect_config_with_scenarios_dir, replay_run,
@@ -216,19 +216,23 @@ fn main() -> Result<()> {
             socket,
             scenarios_dir,
         } => {
-            println!("waves daemon listening on {}", socket.display());
+            let exe = std::env::current_exe()?;
+            let abs_socket = std::path::absolute(&socket)?;
             let scenarios_hint = scenarios_dir
                 .as_ref()
-                .map(|path| format!(" --scenarios-dir {}", path.display()))
+                .map(|path| format!(" --scenarios-dir {}", shell_quote_path(path)))
                 .unwrap_or_default();
+            println!("waves daemon listening on {}", abs_socket.display());
             println!(
-                "observer: cargo run -- tui --connect {}{}",
-                socket.display(),
+                "observer: {} tui --connect {}{}",
+                shell_quote_path(&exe),
+                shell_quote_path(&abs_socket),
                 scenarios_hint
             );
             println!(
-                "mcp bridge: cargo run -- mcp --connect {}{}",
-                socket.display(),
+                "mcp bridge: {} mcp --connect {}{}",
+                shell_quote_path(&exe),
+                shell_quote_path(&abs_socket),
                 scenarios_hint
             );
             waves::daemon::run_server_with_scenarios_dir(
@@ -264,4 +268,9 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn shell_quote_path(path: &Path) -> String {
+    let raw = path.display().to_string();
+    format!("'{}'", raw.replace('\'', r"'\''"))
 }

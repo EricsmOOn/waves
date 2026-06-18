@@ -26,6 +26,10 @@ label.waiting,等待中,ui label
 label.actions,可选行动,ui label
 label.run,运行,ui label
 label.config,配置,ui label
+agent.status.waiting,Agent 状态：等待 MCP 工具调用,status label
+agent.status.connected_now,Agent 状态：已连接，刚刚调用 {tool},status label
+agent.status.connected_seconds,Agent 状态：已连接，{seconds} 秒前调用 {tool},status label
+agent.status.connected_minutes,Agent 状态：已连接，{minutes} 分钟前调用 {tool},status label
 control.quit,q 退出,control label
 control.pause,p/space 暂停,control label
 control.paused,运行已暂停,control message
@@ -115,4 +119,4 @@ resolution.study_chart.failure,地图判断不明确,resolution
 resolution.change_course.success,路线有效，{target} -{amount} {unit},resolution
 resolution.change_course.failure,路线偏移，{target} +{amount} {unit},resolution
 resolution.default,行动没有产生明显结果,resolution
-play.share_hint,复制发给Agent: 使用 cargo run -- mcp --connect {socket} 进行游玩,control
+play.share_hint,给 Agent 的 MCP 命令：{command},control

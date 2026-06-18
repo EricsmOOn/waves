@@ -1,4 +1,5 @@
 use crate::core::{DecisionRecord, DecisionSource, LogEntry, PendingDecision, WorldState};
+use crate::daemon::AgentConnectionStatus;
 use crate::i18n::Catalog;
 use crate::tui::text_width::{Align, pad_to_width, truncate_to_width, wrap_to_width};
 use crate::tui::{StyleRole, Theme, UiEvent, UiEventKind};
@@ -21,21 +22,28 @@ pub struct AppView<'a> {
     pub current_frame: u64,
     pub paused: bool,
     pub connection_hint: Option<&'a str>,
+    pub agent_connection: Option<&'a AgentConnectionStatus>,
 }
 
 pub fn render_app(frame: &mut Frame<'_>, view: &AppView<'_>) {
+    let footer_height = footer_height(view, frame.area().width);
     let root = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),
             Constraint::Min(12),
-            Constraint::Length(4),
+            Constraint::Length(footer_height),
         ])
         .split(frame.area());
 
     render_header(frame, root[0], view);
     render_body(frame, root[1], view);
     render_footer(frame, root[2], view);
+}
+
+fn footer_height(view: &AppView<'_>, frame_width: u16) -> u16 {
+    let inner_width = frame_width.saturating_sub(2) as usize;
+    footer_text_lines(view, inner_width).len().saturating_add(2) as u16
 }
 
 fn render_header(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
@@ -366,6 +374,25 @@ fn render_decisions(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
 }
 
 fn render_footer(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
+    let width = area.width.saturating_sub(2) as usize;
+    let lines = footer_text_lines(view, width)
+        .into_iter()
+        .map(Line::from)
+        .collect::<Vec<_>>();
+
+    frame.render_widget(
+        Paragraph::new(lines)
+            .style(Theme::style(StyleRole::Muted))
+            .block(
+                Block::default()
+                    .title(view.catalog.text("panel.controls"))
+                    .borders(Borders::ALL),
+            ),
+        area,
+    );
+}
+
+fn footer_text_lines(view: &AppView<'_>, width: usize) -> Vec<String> {
     let controls = format!(
         "{} · {} · {} {} · {} {}",
         view.catalog.text("control.quit"),
@@ -376,32 +403,46 @@ fn render_footer(frame: &mut Frame<'_>, area: Rect, view: &AppView<'_>) {
         view.config_hash
     );
 
+    let mut lines = Vec::new();
     if let Some(socket_path) = view.connection_hint {
         let hint = view
             .catalog
-            .format("play.share_hint", &[("socket", socket_path.to_string())]);
-        let lines = vec![Line::from(hint), Line::from(controls)];
-        frame.render_widget(
-            Paragraph::new(lines)
-                .style(Theme::style(StyleRole::Muted))
-                .block(
-                    Block::default()
-                        .title(view.catalog.text("panel.controls"))
-                        .borders(Borders::ALL),
-                ),
-            area,
-        );
+            .format("play.share_hint", &[("command", socket_path.to_string())]);
+        lines.extend(wrap_to_width(&hint, width));
+    }
+    if let Some(status) = agent_status_text(view) {
+        lines.push(truncate_to_width(&status, width));
+    }
+    lines.push(truncate_to_width(&controls, width));
+    lines
+}
+
+fn agent_status_text(view: &AppView<'_>) -> Option<String> {
+    let status = view.agent_connection?;
+    if !status.seen {
+        return Some(view.catalog.text("agent.status.waiting"));
+    }
+
+    let tool = status
+        .last_tool
+        .clone()
+        .unwrap_or_else(|| "unknown".to_string());
+    let seconds = status.last_active_secs_ago.unwrap_or(0);
+    if seconds < 2 {
+        Some(
+            view.catalog
+                .format("agent.status.connected_now", &[("tool", tool)]),
+        )
+    } else if seconds < 60 {
+        Some(view.catalog.format(
+            "agent.status.connected_seconds",
+            &[("seconds", seconds.to_string()), ("tool", tool)],
+        ))
     } else {
-        frame.render_widget(
-            Paragraph::new(controls)
-                .style(Theme::style(StyleRole::Muted))
-                .block(
-                    Block::default()
-                        .title(view.catalog.text("panel.controls"))
-                        .borders(Borders::ALL),
-                ),
-            area,
-        );
+        Some(view.catalog.format(
+            "agent.status.connected_minutes",
+            &[("minutes", (seconds / 60).to_string()), ("tool", tool)],
+        ))
     }
 }
 
@@ -502,6 +543,126 @@ fn decision_source_label(catalog: &Catalog, source: &DecisionSource) -> String {
     match source {
         DecisionSource::Agent => catalog.text("source.agent"),
         DecisionSource::Fallback => catalog.text("source.fallback"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::LocaleTable;
+    use crate::core::{
+        Environment, Memory, Personality, Resources, RiskLevel, SeaCondition, Stats, Weather,
+    };
+    use crate::tui::text_width::display_width;
+    use std::collections::HashMap;
+
+    #[test]
+    fn footer_wraps_long_agent_command_without_ellipsis() {
+        let catalog = test_catalog();
+        let state = test_state();
+        let view = AppView {
+            run_id: "12345678-run",
+            scenario_id: "sea_survival",
+            config_hash: "hash",
+            state: &state,
+            catalog: &catalog,
+            logs: &[],
+            decisions: &[],
+            ui_events: &[],
+            pending_decision: None,
+            current_frame: 0,
+            paused: false,
+            connection_hint: Some(
+                "'/Users/example/Downloads/waves-macos-arm64' mcp --connect '/Users/example/Library/Application Support/waves/data/waves.sock'",
+            ),
+            agent_connection: None,
+        };
+
+        let lines = footer_text_lines(&view, 48);
+
+        assert!(lines.len() > 2);
+        assert!(footer_height(&view, 50) > 5);
+        assert!(!lines.join("\n").contains('…'));
+        assert!(lines.iter().any(|line| line.contains("waves-macos-arm64")));
+        assert!(lines.iter().all(|line| display_width(line) <= 48));
+    }
+
+    fn test_catalog() -> Catalog {
+        let mut entries = HashMap::new();
+        entries.insert(
+            "play.share_hint".to_string(),
+            "Agent MCP command: {command}".to_string(),
+        );
+        entries.insert("control.quit".to_string(), "q quit".to_string());
+        entries.insert("control.pause".to_string(), "p pause".to_string());
+        entries.insert("label.run".to_string(), "run".to_string());
+        entries.insert("label.config".to_string(), "config".to_string());
+        entries.insert("agent.status.waiting".to_string(), "waiting".to_string());
+        entries.insert(
+            "agent.status.connected_now".to_string(),
+            "connected {tool}".to_string(),
+        );
+        entries.insert(
+            "agent.status.connected_seconds".to_string(),
+            "connected {seconds}s {tool}".to_string(),
+        );
+        entries.insert(
+            "agent.status.connected_minutes".to_string(),
+            "connected {minutes}m {tool}".to_string(),
+        );
+
+        let locale = LocaleTable {
+            locale: "en-US".to_string(),
+            entries,
+        };
+        Catalog::new(
+            "en-US",
+            "en-US",
+            HashMap::from([("en-US".to_string(), locale)]),
+        )
+    }
+
+    fn test_state() -> WorldState {
+        WorldState {
+            tick: 0,
+            stats: Stats {
+                hp: 100.0,
+                hunger: 0.0,
+                thirst: 0.0,
+                energy: 100.0,
+                morale: 50.0,
+                raft: 100.0,
+            },
+            resources: Resources {
+                food: 1.0,
+                water: 1.0,
+                wood: 1.0,
+                fiber: 1.0,
+                tool: 1.0,
+            },
+            environment: Environment {
+                weather: Weather::Clear,
+                sea: SeaCondition::Calm,
+                wind: "NE".to_string(),
+                risk: RiskLevel::Low,
+                day: 1,
+                minute_of_day: 0,
+                distance_to_land: 120.0,
+            },
+            personality: Personality {
+                risk_bias: 0.0,
+                water_priority: 1.0,
+                exploration_bias: 1.0,
+                repair_priority: 1.0,
+            },
+            memory: Memory {
+                goal_key: "goal".to_string(),
+                concern_key: "concern".to_string(),
+                recent: Vec::new(),
+            },
+            alive: true,
+            outcome: None,
+        }
     }
 }
 

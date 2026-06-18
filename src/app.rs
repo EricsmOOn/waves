@@ -180,7 +180,7 @@ pub fn run_play(
     scenarios_dir: Option<PathBuf>,
 ) -> Result<()> {
     let abs_socket = absolute_socket_path(&socket_path)?;
-    let hint = play_connection_hint(&abs_socket);
+    let hint = play_connection_hint(&abs_socket)?;
 
     let (startup_tx, startup_rx) = mpsc::channel();
     let server_socket = abs_socket.clone();
@@ -214,8 +214,22 @@ fn absolute_socket_path(socket_path: &Path) -> Result<PathBuf> {
         .with_context(|| format!("resolving socket path {}", socket_path.display()))
 }
 
-fn play_connection_hint(abs_socket: &Path) -> String {
-    abs_socket.display().to_string()
+fn play_connection_hint(abs_socket: &Path) -> Result<String> {
+    let exe = std::env::current_exe().context("resolving current waves executable")?;
+    Ok(play_connection_hint_with_exe(&exe, abs_socket))
+}
+
+fn play_connection_hint_with_exe(exe: &Path, abs_socket: &Path) -> String {
+    format!(
+        "{} mcp --connect {}",
+        shell_quote_path(exe),
+        shell_quote_path(abs_socket)
+    )
+}
+
+fn shell_quote_path(path: &Path) -> String {
+    let raw = path.display().to_string();
+    format!("'{}'", raw.replace('\'', r"'\''"))
 }
 
 fn wait_for_daemon_start(
@@ -312,13 +326,14 @@ mod tests {
     use std::time::Instant;
 
     #[test]
-    fn play_connection_hint_uses_absolute_socket_path() {
+    fn play_connection_hint_uses_binary_command_and_absolute_socket_path() {
         let socket =
             absolute_socket_path(Path::new("data/waves.sock")).expect("socket path should resolve");
-        let hint = play_connection_hint(&socket);
+        let hint = play_connection_hint_with_exe(Path::new("/tmp/waves"), &socket);
 
-        assert!(Path::new(&hint).is_absolute());
-        assert!(hint.ends_with("data/waves.sock"));
+        assert!(hint.starts_with("'/tmp/waves' mcp --connect '"));
+        assert!(hint.contains(" mcp --connect "));
+        assert!(hint.ends_with("data/waves.sock'"));
     }
 
     #[test]

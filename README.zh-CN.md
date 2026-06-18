@@ -71,7 +71,23 @@ cargo run -- play
 ./waves play
 ```
 
-TUI 底部会显示 MCP 连接命令。把这条命令配置给你的 MCP 客户端后，agent 就可以通过 MCP 工具推进游戏。
+TUI 底部会显示当前二进制对应的完整 MCP 命令，例如：
+
+```text
+给 Agent 的 MCP 命令：'/path/to/waves' mcp --connect '/path/to/data/waves.sock'
+Agent 状态：等待 MCP 工具调用
+```
+
+把这条命令发给你的 agent，或者配置到 MCP 客户端。可以直接这样提示 agent：
+
+```text
+请使用这个 MCP server 连接并游玩 Waves：
+'/path/to/waves' mcp --connect '/path/to/data/waves.sock'
+
+连接后先调用 waves_get_state。之后循环调用 waves_step，遇到 pending decision 时从可选行动中选择一个，用 waves_submit_decision 提交理由，读取结果后继续。
+```
+
+只要 agent 调用过任意 Waves MCP 工具，TUI 底部就会从等待状态变成已连接，并显示最近一次工具调用。
 
 如果你想手动分开启动 daemon、MCP 和 TUI：
 
