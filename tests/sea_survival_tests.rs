@@ -27,6 +27,15 @@ fn deterministic_seed_repeats_final_state() {
 }
 
 #[test]
+fn seed_42_scripted_run_survives_reported_thirst_spike() {
+    let report = run_headless("sea_survival", "zh-CN", 120, 42, None).expect("headless run");
+
+    assert_eq!(report.final_state.tick, 120);
+    assert!(report.final_state.stats.hp > 0.0);
+    assert!(report.final_state.stats.thirst < 100.0);
+}
+
+#[test]
 fn balance_table_controls_rest_resolution_values() {
     let mut config = load_scenario_config("sea_survival").expect("config should load");
     config

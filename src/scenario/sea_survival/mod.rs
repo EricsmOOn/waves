@@ -125,7 +125,10 @@ impl Scenario for SeaSurvivalScenario {
         );
         state.stats.thirst = clamp(
             state.stats.thirst + self.balance("thirst_per_tick", 1.6)
-                - state.resources.water.min(0.08),
+                - state
+                    .resources
+                    .water
+                    .min(self.balance("water_thirst_relief_per_tick", 0.08)),
         );
         state.stats.energy = clamp(state.stats.energy - self.balance("energy_per_tick", 0.8));
         state.resources.water =

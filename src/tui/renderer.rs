@@ -546,6 +546,26 @@ fn decision_source_label(catalog: &Catalog, source: &DecisionSource) -> String {
     }
 }
 
+fn risk_label(catalog: &Catalog, event: &UiEvent) -> String {
+    let key = if event.target.starts_with("risk.") {
+        event.target.as_str()
+    } else {
+        legacy_risk_key(&event.message).unwrap_or("risk.medium")
+    };
+    catalog.text(key)
+}
+
+fn legacy_risk_key(message: &str) -> Option<&'static str> {
+    let risk = message.split_whitespace().last()?;
+    match risk {
+        "low" => Some("risk.low"),
+        "medium" => Some("risk.medium"),
+        "high" => Some("risk.high"),
+        "critical" => Some("risk.critical"),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -663,25 +683,5 @@ mod tests {
             alive: true,
             outcome: None,
         }
-    }
-}
-
-fn risk_label(catalog: &Catalog, event: &UiEvent) -> String {
-    let key = if event.target.starts_with("risk.") {
-        event.target.as_str()
-    } else {
-        legacy_risk_key(&event.message).unwrap_or("risk.medium")
-    };
-    catalog.text(key)
-}
-
-fn legacy_risk_key(message: &str) -> Option<&'static str> {
-    let risk = message.split_whitespace().last()?;
-    match risk {
-        "low" => Some("risk.low"),
-        "medium" => Some("risk.medium"),
-        "high" => Some("risk.high"),
-        "critical" => Some("risk.critical"),
-        _ => None,
     }
 }
